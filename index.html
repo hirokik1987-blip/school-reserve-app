@@ -51,27 +51,23 @@
         }
         .reservation-tile {
             cursor: grab;
-            transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+            transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
             user-select: none;
         }
         .reservation-tile:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.08);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px -2px rgba(0, 0, 0, 0.08);
         }
         .reservation-tile:active {
             cursor: grabbing;
         }
-        .reservation-tile.dragging {
-            opacity: 0.45;
-            transform: scale(0.96);
-        }
         .drop-zone {
-            transition: background-color 0.15s ease, outline 0.15s ease;
+            transition: background-color 0.12s ease, outline 0.12s ease;
         }
         .drop-zone.drag-over {
             background-color: rgba(79, 70, 229, 0.08) !important;
             outline: 2px dashed #4F46E5;
-            outline-offset: -3px;
+            outline-offset: -2px;
         }
         .move-target-pulse {
             animation: pulseBorder 1.5s infinite;
@@ -83,50 +79,47 @@
         input[type="text"], input[type="time"], input[type="date"], select {
             font-size: 16px !important;
         }
-        /* 12コマ対応マトリクス・週間グリッド */
-        .matrix-grid {
+
+        /* 12コマ均等フィットグリッド */
+        .matrix-grid, .weekly-grid-row {
             display: grid;
-            grid-template-columns: 80px repeat(12, minmax(105px, 1fr));
+            grid-template-columns: 62px repeat(12, minmax(0, 1fr));
+            width: 100%;
         }
-        @media (min-width: 640px) {
-            .matrix-grid {
-                grid-template-columns: 110px repeat(12, minmax(120px, 1fr));
-            }
-        }
-        .weekly-grid-row {
-            display: grid;
-            grid-template-columns: 85px repeat(12, minmax(105px, 1fr));
-        }
-        @media (min-width: 640px) {
-            .weekly-grid-row {
-                grid-template-columns: 105px repeat(12, minmax(120px, 1fr));
+        @media (min-width: 768px) {
+            .matrix-grid, .weekly-grid-row {
+                grid-template-columns: 78px repeat(12, minmax(0, 1fr));
             }
         }
         .weekly-scroll-container {
-            max-height: calc(100vh - 220px);
+            max-height: calc(100vh - 190px);
             overflow-y: auto;
-            overflow-x: auto;
+            overflow-x: hidden;
+            width: 100%;
         }
-        @media (max-width: 640px) {
+        @media (max-width: 900px) {
             .weekly-scroll-container {
-                max-height: calc(100vh - 190px);
+                overflow-x: auto;
+            }
+            .matrix-grid, .weekly-grid-row {
+                min-width: 960px;
             }
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col pb-20 md:pb-0 selection:bg-indigo-100 selection:text-indigo-900">
+<body class="min-h-screen flex flex-col pb-24 md:pb-0 selection:bg-indigo-100 selection:text-indigo-900">
 
     <!-- ヘッダー -->
-    <header class="bg-white border-b border-notion-border px-3 py-2 sm:px-6 z-30 sticky top-0 shadow-2xs">
+    <header class="bg-white border-b border-notion-border px-3 py-1.5 sm:px-6 sm:py-2 z-30">
         <div class="max-w-[1900px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-2">
             <div class="flex items-center justify-between sm:justify-start gap-3">
                 <div class="flex items-center gap-2 sm:gap-3">
-                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-indigo-600 text-white flex items-center justify-center shadow-sm shrink-0">
-                        <i class="ph-bold ph-squares-four text-lg sm:text-xl"></i>
+                    <div class="w-7 h-7 sm:w-9 sm:h-9 rounded-lg bg-indigo-600 text-white flex items-center justify-center shadow-sm shrink-0">
+                        <i class="ph-bold ph-squares-four text-base sm:text-lg"></i>
                     </div>
                     <div class="flex flex-col">
                         <span class="text-[10px] sm:text-xs font-bold text-indigo-600 tracking-wider">SchooRoom</span>
-                        <h1 class="font-bold text-sm sm:text-xl tracking-tight text-notion-text flex items-center gap-2 flex-wrap leading-tight">
+                        <h1 class="font-bold text-sm sm:text-lg tracking-tight text-notion-text flex items-center gap-2 flex-wrap leading-tight">
                             特別教室予約確認ボード
                             <span id="liveTodayBadge" class="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 text-[10px] sm:text-xs font-semibold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>本日
@@ -139,48 +132,46 @@
                 </div>
             </div>
 
-            <!-- Date Picker & Controls -->
-            <div class="flex flex-wrap items-center gap-1 sm:gap-3 bg-notion-sidebar p-1 sm:p-2 rounded-lg border border-notion-border justify-between sm:justify-start">
+            <div class="flex flex-wrap items-center gap-1 sm:gap-2 bg-notion-sidebar p-1 rounded-lg border border-notion-border justify-between sm:justify-start">
                 <div class="flex items-center gap-1">
-                    <button onclick="window.shiftSelectedDate(-1)" class="p-1 sm:p-2 rounded-md hover:bg-white hover:shadow-sm text-notion-text transition" title="前日へ">
-                        <i class="ph-bold ph-caret-left text-base sm:text-xl"></i>
+                    <button onclick="window.shiftSelectedDate(-1)" class="p-1 rounded-md hover:bg-white hover:shadow-2xs text-notion-text transition" title="前日へ">
+                        <i class="ph-bold ph-caret-left text-base"></i>
                     </button>
                     <div class="relative flex items-center">
                         <input
                             type="date"
                             id="headerDatePicker"
                             onchange="window.handleDateInput(this.value)"
-                            class="bg-transparent font-bold text-sm sm:text-base px-1 py-0.5 sm:px-2 sm:py-1 rounded-md hover:bg-white focus:bg-white focus:outline-none cursor-pointer w-[120px] sm:w-[140px]"
+                            class="bg-transparent font-bold text-xs sm:text-sm px-1 py-0.5 rounded-md hover:bg-white focus:bg-white focus:outline-none cursor-pointer w-[110px] sm:w-[130px]"
                         />
                     </div>
-                    <span id="selectedDayOfWeek" class="text-xs sm:text-sm font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md bg-white border border-notion-border text-notion-text shrink-0"></span>
-                    <button onclick="window.shiftSelectedDate(1)" class="p-1 sm:p-2 rounded-md hover:bg-white hover:shadow-sm text-notion-text transition" title="翌日へ">
-                        <i class="ph-bold ph-caret-right text-base sm:text-xl"></i>
+                    <span id="selectedDayOfWeek" class="text-xs font-bold px-1.5 py-0.5 rounded-md bg-white border border-notion-border text-notion-text shrink-0"></span>
+                    <button onclick="window.shiftSelectedDate(1)" class="p-1 rounded-md hover:bg-white hover:shadow-2xs text-notion-text transition" title="翌日へ">
+                        <i class="ph-bold ph-caret-right text-base"></i>
                     </button>
                 </div>
-                <div class="flex items-center gap-1 sm:gap-2 ml-auto sm:ml-0">
-                    <button onclick="window.jumpToToday()" id="btnJumpToday" class="px-2 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm font-semibold rounded-md bg-white border border-notion-border hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition shadow-2xs">
+                <div class="flex items-center gap-1.5 ml-auto sm:ml-0">
+                    <button onclick="window.jumpToToday()" id="btnJumpToday" class="px-2 py-1 text-xs font-semibold rounded-md bg-white border border-notion-border hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition shadow-2xs">
                         今日
                     </button>
                     <button
                         onclick="window.toggleDayScheduleMode()"
                         id="btnDayScheduleMode"
-                        class="px-2 py-1 sm:px-3 sm:py-1.5 text-[11px] sm:text-sm font-bold rounded-md border transition flex items-center gap-1 shadow-2xs"
+                        class="px-2 py-1 text-[10px] sm:text-xs font-bold rounded-md border transition flex items-center gap-1 shadow-2xs"
                     >
-                        <i class="ph-bold ph-arrows-clockwise text-xs sm:text-base"></i>
+                        <i class="ph-bold ph-arrows-clockwise text-xs"></i>
                         <span id="dayScheduleModeLabel">6校時日課</span>
                     </button>
                 </div>
             </div>
 
-            <!-- Action Buttons (Desktop Only) -->
             <div class="hidden md:flex items-center gap-2">
-                <div id="cloudStatusBadge" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-50 border border-sky-200 text-sky-700 text-xs font-semibold transition-colors">
+                <div id="cloudStatusBadge" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-sky-50 border border-sky-200 text-sky-700 text-xs font-semibold transition-colors">
                     <span id="cloudStatusDot" class="w-2 h-2 rounded-full bg-sky-500 animate-pulse transition-colors"></span>
                     <span id="cloudStatusText">クラウド接続中...</span>
                 </div>
-                <button onclick="window.openAddRoomModal()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-white border border-notion-border hover:bg-notion-hover text-notion-text transition shadow-2xs">
-                    <i class="ph-bold ph-door-open text-indigo-600 text-sm"></i>
+                <button onclick="window.openAddRoomModal()" class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg bg-white border border-notion-border hover:bg-notion-hover text-notion-text transition shadow-2xs">
+                    <i class="ph-bold ph-door-open text-indigo-600"></i>
                     <span>教室管理</span>
                 </button>
             </div>
@@ -188,57 +179,48 @@
     </header>
 
     <!-- デスクトップ用 タブナビゲーション -->
-    <div class="bg-white border-b border-notion-border px-4 sm:px-6 py-2 hidden md:block z-20 sticky top-[57px] shadow-2xs">
-        <div class="max-w-[1900px] mx-auto flex items-center gap-2">
-            <button onclick="window.switchView('weekly')" id="tab-weekly" class="view-tab flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition whitespace-nowrap">
-                <i class="ph-bold ph-calendar-week text-lg"></i><span>週間表示</span>
+    <div class="bg-white border-b border-notion-border px-3 sm:px-6 py-1.5 hidden md:block z-20">
+        <div class="max-w-[1900px] mx-auto flex items-center gap-1.5">
+            <button onclick="window.switchView('weekly')" id="tab-weekly" class="view-tab flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition whitespace-nowrap">
+                <i class="ph-bold ph-calendar-week text-base"></i><span>週間表示</span>
             </button>
-            <button onclick="window.switchView('matrix')" id="tab-matrix" class="view-tab flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition whitespace-nowrap">
-                <i class="ph-bold ph-grid-four text-lg"></i><span>当日一覧</span>
+            <button onclick="window.switchView('matrix')" id="tab-matrix" class="view-tab flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition whitespace-nowrap">
+                <i class="ph-bold ph-grid-four text-base"></i><span>当日一覧</span>
             </button>
-            <button onclick="window.switchView('calendar')" id="tab-calendar" class="view-tab flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition whitespace-nowrap">
-                <i class="ph-bold ph-calendar-blank text-lg"></i><span>カレンダー</span>
+            <button onclick="window.switchView('calendar')" id="tab-calendar" class="view-tab flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition whitespace-nowrap">
+                <i class="ph-bold ph-calendar-blank text-base"></i><span>カレンダー</span>
             </button>
         </div>
     </div>
 
-    <!-- 移動モードのバナー -->
-    <div id="mobileMoveBanner" class="hidden sticky top-0 z-40 bg-indigo-600 text-white px-4 py-3 sm:px-6 sm:py-4 shadow-md">
+    <!-- 移動中バナー -->
+    <div id="mobileMoveBanner" class="hidden sticky top-0 z-40 bg-indigo-600 text-white px-4 py-2 sm:px-6 sm:py-3 shadow-md">
         <div class="max-w-[1900px] mx-auto flex items-center justify-between gap-3">
-            <div class="flex items-center gap-3 text-sm sm:text-base font-bold min-w-0">
-                <i class="ph-bold ph-arrows-out-cardinal text-xl sm:text-2xl animate-bounce shrink-0"></i>
-                <span id="mobileMoveBannerText" class="truncate">移動先の空き枠（または入替枠）をタップ</span>
+            <div class="flex items-center gap-2 text-xs sm:text-sm font-bold min-w-0">
+                <i class="ph-bold ph-arrows-out-cardinal text-lg animate-bounce shrink-0"></i>
+                <span id="mobileMoveBannerText" class="truncate">移動先の空き枠をタップしてください</span>
             </div>
-            <button onclick="window.cancelTileMoveMode()" class="px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg bg-white/20 hover:bg-white/30 text-white text-xs sm:text-sm font-bold shrink-0 transition">
+            <button onclick="window.cancelTileMoveMode()" class="px-3 py-1 rounded-md bg-white/20 hover:bg-white/30 text-white text-xs font-bold shrink-0 transition">
                 キャンセル
             </button>
         </div>
     </div>
 
-    <main class="flex-1 max-w-[1900px] w-full mx-auto px-2 sm:px-8 py-3 sm:py-6 space-y-4">
-
+    <main class="flex-1 max-w-[1900px] w-full mx-auto px-2 sm:px-4 py-3 sm:py-5 space-y-4">
         <!-- VIEW: Weekly (全教室週間表示) -->
-        <section id="view-weekly" class="space-y-4">
-            <div class="bg-white rounded-xl sm:rounded-2xl border border-notion-border p-3 sm:p-5 shadow-2xs flex flex-col">
-                <div class="flex flex-wrap items-center justify-between gap-3 mb-3 pb-3 border-b border-notion-border">
-                    <div class="flex items-center gap-2 sm:gap-3">
-                        <h3 class="font-bold text-base sm:text-2xl text-notion-text flex items-center gap-2">
-                            <i class="ph-bold ph-calendar-week text-indigo-600"></i> 週間表示 (全教室)
-                        </h3>
-                        <span class="text-xs text-notion-muted font-bold" id="weeklyRangeLabel"></span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <button onclick="window.shiftSelectedDate(-7)" class="px-2.5 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-bold rounded-lg border border-notion-border hover:bg-notion-hover bg-white flex items-center gap-1 shadow-2xs">
-                            <i class="ph-bold ph-caret-left"></i> 前週
-                        </button>
-                        <button onclick="window.shiftSelectedDate(7)" class="px-2.5 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-bold rounded-lg border border-notion-border hover:bg-notion-hover bg-white flex items-center gap-1 shadow-2xs">
-                            翌週 <i class="ph-bold ph-caret-right"></i>
-                        </button>
+        <section id="view-weekly" class="space-y-3">
+            <div class="bg-white rounded-xl border border-notion-border p-2 sm:p-4 shadow-2xs flex flex-col">
+                <div class="flex items-center justify-between gap-2 mb-2 pb-2 border-b border-notion-border">
+                    <h3 class="font-bold text-sm sm:text-base text-notion-text flex items-center gap-1.5">
+                        <i class="ph-bold ph-calendar-week text-indigo-600"></i> 週間表示 (全教室)
+                    </h3>
+                    <div class="flex items-center gap-1.5">
+                        <button onclick="window.shiftSelectedDate(-7)" class="px-2.5 py-1 text-xs font-semibold rounded-md border border-notion-border hover:bg-notion-hover bg-white">◀ 前週</button>
+                        <button onclick="window.shiftSelectedDate(7)" class="px-2.5 py-1 text-xs font-semibold rounded-md border border-notion-border hover:bg-notion-hover bg-white">翌週 ▶</button>
                     </div>
                 </div>
-
-                <div class="weekly-scroll-container border border-notion-border rounded-xl shadow-inner bg-white">
-                    <div id="allRoomsWeeklyGrid" class="min-w-[1350px] bg-white relative">
+                <div class="weekly-scroll-container border border-notion-border rounded-lg bg-white">
+                    <div id="allRoomsWeeklyGrid" class="w-full bg-white relative">
                         <!-- Populated dynamically -->
                     </div>
                 </div>
@@ -246,22 +228,22 @@
         </section>
 
         <!-- VIEW: Matrix (当日一覧) -->
-        <section id="view-matrix" class="hidden space-y-4">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white px-4 py-3 sm:px-6 rounded-xl border border-notion-border shadow-2xs">
-                <div class="flex items-center gap-3">
-                    <i class="ph-fill ph-sparkle text-indigo-600 text-xl"></i>
-                    <h2 id="matrixDateHeading" class="font-bold text-base sm:text-xl flex items-center gap-3 flex-wrap"></h2>
+        <section id="view-matrix" class="hidden space-y-3">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white px-3 py-2 sm:px-4 rounded-xl border border-notion-border shadow-2xs">
+                <div class="flex items-center gap-2">
+                    <i class="ph-fill ph-sparkle text-indigo-600 text-lg"></i>
+                    <h2 id="matrixDateHeading" class="font-bold text-sm sm:text-base flex items-center gap-2 flex-wrap"></h2>
                 </div>
-                <div class="flex flex-wrap items-center gap-2 text-xs">
-                    <span class="px-2.5 py-1 rounded-md bg-blue-50 text-blue-700 font-bold border border-blue-200">授業</span>
-                    <span class="px-2.5 py-1 rounded-md bg-orange-50 text-orange-700 font-bold border border-orange-200">部活動</span>
-                    <span class="px-2.5 py-1 rounded-md bg-purple-50 text-purple-700 font-bold border border-purple-200">行事</span>
-                    <span class="px-2.5 py-1 rounded-md bg-amber-50 text-amber-800 font-bold border border-amber-200">会議</span>
-                    <span class="px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 font-bold border border-slate-300">その他</span>
+                <div class="flex flex-wrap items-center gap-1.5 text-[11px]">
+                    <span class="px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-bold border border-blue-200">授業</span>
+                    <span class="px-2 py-0.5 rounded bg-orange-50 text-orange-700 font-bold border border-orange-200">部活動</span>
+                    <span class="px-2 py-0.5 rounded bg-purple-50 text-purple-700 font-bold border border-purple-200">行事</span>
+                    <span class="px-2 py-0.5 rounded bg-amber-50 text-amber-800 font-bold border border-amber-200">会議</span>
+                    <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-bold border border-slate-300">その他</span>
                 </div>
             </div>
             <div id="matrixTableWrapper" class="weekly-scroll-container bg-white rounded-xl border border-notion-border shadow-xs">
-                <div id="matrixGridContainer" class="w-full min-w-[1350px] bg-white relative">
+                <div id="matrixGridContainer" class="w-full bg-white relative">
                     <!-- Populated dynamically -->
                 </div>
             </div>
@@ -269,233 +251,282 @@
 
         <!-- VIEW: Calendar (月間カレンダー) -->
         <section id="view-calendar" class="hidden space-y-4">
-            <div class="bg-white rounded-xl sm:rounded-2xl border border-notion-border p-4 sm:p-6 shadow-2xs">
-                <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
-                    <div class="flex items-center gap-3 sm:gap-6">
-                        <h2 id="calendarMonthHeading" class="font-bold text-xl sm:text-3xl text-notion-text"></h2>
+            <div class="bg-white rounded-xl border border-notion-border p-3 sm:p-6 shadow-2xs">
+                <div class="flex items-center justify-between gap-3 mb-4">
+                    <div class="flex items-center gap-3">
+                        <h2 id="calendarMonthHeading" class="font-bold text-lg sm:text-2xl text-notion-text"></h2>
                         <div class="flex items-center gap-1 bg-notion-sidebar p-1 rounded-lg border border-notion-border">
-                            <button onclick="window.changeCalendarMonth(-1)" class="p-1.5 sm:p-2 rounded-md hover:bg-white text-sm font-bold"><i class="ph-bold ph-caret-left"></i></button>
-                            <button onclick="window.resetCalendarToCurrentMonth()" class="px-2.5 py-1 rounded-md hover:bg-white text-xs sm:text-sm font-bold">今月</button>
-                            <button onclick="window.changeCalendarMonth(1)" class="p-1.5 sm:p-2 rounded-md hover:bg-white text-sm font-bold"><i class="ph-bold ph-caret-right"></i></button>
+                            <button onclick="window.changeCalendarMonth(-1)" class="p-1 rounded hover:bg-white text-xs font-bold"><i class="ph-bold ph-caret-left"></i></button>
+                            <button onclick="window.resetCalendarToCurrentMonth()" class="px-2 py-1 rounded hover:bg-white text-xs font-bold">今月</button>
+                            <button onclick="window.changeCalendarMonth(1)" class="p-1 rounded hover:bg-white text-xs font-bold"><i class="ph-bold ph-caret-right"></i></button>
                         </div>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-7 gap-1 sm:gap-2 text-center text-xs sm:text-sm font-bold text-notion-muted mb-2">
-                    <div class="py-2 text-rose-600 bg-rose-50/60 rounded-md">日</div>
-                    <div class="py-2 bg-notion-sidebar rounded-md">月</div>
-                    <div class="py-2 bg-notion-sidebar rounded-md">火</div>
-                    <div class="py-2 bg-notion-sidebar rounded-md">水</div>
-                    <div class="py-2 bg-notion-sidebar rounded-md">木</div>
-                    <div class="py-2 bg-notion-sidebar rounded-md">金</div>
-                    <div class="py-2 text-sky-600 bg-sky-50/60 rounded-md">土</div>
+                <div class="grid grid-cols-7 gap-1 text-center text-xs font-bold text-notion-muted mb-2">
+                    <div class="py-1 text-rose-600 bg-rose-50/60 rounded">日</div>
+                    <div class="py-1 bg-notion-sidebar rounded">月</div>
+                    <div class="py-1 bg-notion-sidebar rounded">火</div>
+                    <div class="py-1 bg-notion-sidebar rounded">水</div>
+                    <div class="py-1 bg-notion-sidebar rounded">木</div>
+                    <div class="py-1 bg-notion-sidebar rounded">金</div>
+                    <div class="py-1 text-sky-600 bg-sky-50/60 rounded">土</div>
                 </div>
 
-                <div id="calendarDaysGrid" class="grid grid-cols-7 gap-1 sm:gap-2">
+                <div id="calendarDaysGrid" class="grid grid-cols-7 gap-1">
                     <!-- Populated dynamically -->
                 </div>
 
-                <div id="calendarMobileDayDetail" class="mt-6 pt-6 border-t border-notion-border">
+                <div id="calendarMobileDayDetail" class="mt-4 pt-4 border-t border-notion-border">
                     <!-- Populated dynamically -->
                 </div>
             </div>
         </section>
-
     </main>
 
-    <!-- Mobile Navigation Bar -->
-    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-notion-border px-2 py-1.5 flex items-center justify-around shadow-[0_-4px_15px_rgba(0,0,0,0.05)]">
+    <!-- Mobile Fixed Bottom Navigation Bar -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-notion-border px-1 py-1 flex items-center justify-around shadow-[0_-3px_12px_rgba(0,0,0,0.04)]">
         <button onclick="window.switchView('weekly')" id="mob-tab-weekly" class="flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-[10px] font-bold transition w-1/4">
-            <i class="ph-bold ph-calendar-week text-xl"></i><span>週間表示</span>
+            <i class="ph-bold ph-calendar-week text-lg"></i><span>週間表示</span>
         </button>
         <button onclick="window.switchView('matrix')" id="mob-tab-matrix" class="flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-[10px] font-bold transition w-1/4">
-            <i class="ph-bold ph-grid-four text-xl"></i><span>当日一覧</span>
+            <i class="ph-bold ph-grid-four text-lg"></i><span>当日一覧</span>
         </button>
         <button onclick="window.switchView('calendar')" id="mob-tab-calendar" class="flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-[10px] font-bold transition w-1/4">
-            <i class="ph-bold ph-calendar-blank text-xl"></i><span>カレンダー</span>
+            <i class="ph-bold ph-calendar-blank text-lg"></i><span>カレンダー</span>
         </button>
-        <button onclick="window.openReservationModal()" class="flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-[10px] font-bold bg-indigo-600 text-white shadow-xs transition w-1/4">
-            <i class="ph-bold ph-plus-circle text-xl"></i><span>新規予約</span>
+        <button onclick="window.openReservationModal()" class="flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-[10px] font-bold bg-indigo-600 text-white shadow-2xs transition w-1/4">
+            <i class="ph-bold ph-plus-circle text-lg"></i><span>新規予約</span>
         </button>
     </nav>
 
     <!-- Reservation Modal -->
-    <div id="reservationModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm p-3 sm:p-4">
-        <div class="bg-white rounded-2xl sm:rounded-3xl border border-notion-border shadow-2xl max-w-2xl w-full flex flex-col max-h-[88vh] relative overflow-hidden">
+    <div id="reservationModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm p-3">
+        <div class="bg-white rounded-2xl border border-notion-border shadow-2xl max-w-xl w-full flex flex-col max-h-[90vh] overflow-hidden relative">
             
-            <div class="flex items-center justify-between px-5 py-3.5 sm:py-4 border-b border-notion-border bg-notion-sidebar shrink-0">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center">
-                        <i class="ph-bold ph-calendar-plus text-lg"></i>
+            <div class="flex items-center justify-between px-4 py-3 border-b border-notion-border bg-notion-sidebar shrink-0">
+                <div class="flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center">
+                        <i class="ph-bold ph-calendar-plus text-base"></i>
                     </div>
-                    <h3 id="reservationModalTitle" class="font-bold text-base sm:text-lg text-notion-text">特別教室を予約する</h3>
+                    <h3 id="reservationModalTitle" class="font-bold text-sm sm:text-base text-notion-text">特別教室を予約する</h3>
                 </div>
                 <button type="button" onclick="window.closeReservationModal()" class="p-1 rounded-lg text-notion-muted hover:text-notion-text hover:bg-white transition">
-                    <i class="ph-bold ph-x text-xl"></i>
+                    <i class="ph-bold ph-x text-lg"></i>
                 </button>
             </div>
 
             <!-- インライン削除確認バー -->
-            <div id="deleteConfirmBar" class="hidden bg-rose-50 border-b border-rose-200 p-3 sm:px-5 flex items-center justify-between gap-3 text-rose-900 shrink-0">
-                <div class="flex items-center gap-2 text-xs sm:text-sm font-bold">
-                    <i class="ph-fill ph-warning-circle text-rose-600 text-lg"></i>
+            <div id="inlineDeleteConfirm" class="hidden bg-rose-50 border-b border-rose-200 px-4 py-2.5 flex items-center justify-between gap-2 shrink-0 animate-fadeIn">
+                <div class="flex items-center gap-2 text-rose-800 text-xs font-bold">
+                    <i class="ph-fill ph-warning-circle text-base text-rose-600"></i>
                     <span>この予約を完全に削除しますか？</span>
                 </div>
-                <div class="flex items-center gap-2 shrink-0">
-                    <button type="button" id="btnCancelDelete" class="px-2.5 py-1 text-xs font-bold rounded-md bg-white border border-rose-300 hover:bg-rose-100 text-rose-700">やめる</button>
-                    <button type="button" id="btnConfirmDelete" class="px-3 py-1 text-xs font-bold rounded-md bg-rose-600 hover:bg-rose-700 text-white shadow-xs">削除する</button>
+                <div class="flex items-center gap-2">
+                    <button type="button" id="btnConfirmDeleteNo" class="px-2.5 py-1 text-xs font-bold rounded-md bg-white border border-rose-300 text-rose-800 hover:bg-rose-100">やめる</button>
+                    <button type="button" id="btnConfirmDeleteYes" class="px-3 py-1 text-xs font-bold rounded-md bg-rose-600 text-white hover:bg-rose-700 shadow-2xs">削除する</button>
                 </div>
             </div>
 
-            <form id="reservationForm" onsubmit="window.saveReservationForm(event)" class="p-4 sm:p-6 space-y-4 overflow-y-auto overscroll-contain flex-1 bg-white pb-28 sm:pb-28" novalidate>
+            <form id="reservationForm" onsubmit="window.saveReservationForm(event)" class="p-3 sm:p-5 space-y-4 overflow-y-auto overscroll-contain flex-1 no-scrollbar bg-white pb-24" novalidate>
                 <input type="hidden" id="resFormId" />
 
-                <!-- Step 1: 教室・日付 -->
-                <div class="space-y-3 bg-notion-sidebar/60 p-3 sm:p-4 rounded-xl border border-notion-border">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <!-- 教室・日付 -->
+                <div class="bg-notion-sidebar/50 p-3 rounded-xl border border-notion-border space-y-2.5">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <div>
-                            <label class="block text-xs font-bold text-notion-muted mb-1">特別教室 (会場) <span class="text-rose-500">*</span></label>
-                            <select id="resFormRoom" required onchange="window.checkFormConflictWarning()" class="w-full px-2.5 py-2 rounded-lg border border-notion-border text-sm font-bold bg-white focus:ring-2 focus:ring-indigo-500">
+                            <label class="block text-xs font-bold text-notion-muted mb-1">特別教室 (会場)</label>
+                            <select id="resFormRoom" required onchange="window.checkFormConflictWarning()" class="w-full px-2.5 py-1.5 rounded-lg border border-notion-border text-xs sm:text-sm font-bold bg-white focus:ring-2 focus:ring-indigo-500 truncate">
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-notion-muted mb-1">利用日 <span class="text-rose-500">*</span></label>
-                            <input type="date" id="resFormDate" required onchange="window.handleModalDateOrPeriodChange()" class="w-full px-2.5 py-2 rounded-lg border border-notion-border text-sm font-bold bg-white focus:ring-2 focus:ring-indigo-500" />
-                        </div>
-                    </div>
-                    
-                    <!-- 時間指定モードの切り替えタブ -->
-                    <div class="pt-2 border-t border-notion-border/70">
-                        <label class="block text-xs font-bold text-notion-muted mb-1.5">時間帯の指定方法</label>
-                        <div class="grid grid-cols-2 gap-2 p-1 bg-white rounded-lg border border-notion-border">
-                            <button type="button" id="modeBtnSlot" onclick="window.setTimeMode('slot')" class="py-1.5 text-xs font-bold rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-2xs flex items-center justify-center gap-1">
-                                <i class="ph-bold ph-calendar-check"></i> ① コマから選ぶ
-                            </button>
-                            <button type="button" id="modeBtnExact" onclick="window.setTimeMode('exact')" class="py-1.5 text-xs font-bold rounded-md text-notion-muted hover:bg-notion-sidebar flex items-center justify-center gap-1">
-                                <i class="ph-bold ph-clock"></i> ② 時間を直接指定
-                            </button>
+                            <label class="block text-xs font-bold text-notion-muted mb-1">利用日</label>
+                            <input type="date" id="resFormDate" required onchange="window.handleModalDateOrPeriodChange()" class="w-full px-2.5 py-1.5 rounded-lg border border-notion-border text-xs sm:text-sm font-bold bg-white focus:ring-2 focus:ring-indigo-500" />
                         </div>
                     </div>
 
-                    <!-- パターン①：コマ範囲選択 (開始時刻のみ / 終了時刻のみ) -->
-                    <div id="containerSlotMode" class="space-y-1.5">
-                        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-1.5 sm:gap-2">
-                            <div class="flex-1 min-w-0">
-                                <label class="block text-[11px] font-bold text-notion-muted mb-0.5">開始コマ</label>
-                                <select id="resFormStartSlot" required onchange="window.handleModalDateOrPeriodChange()" class="w-full px-2.5 py-2 rounded-lg border border-notion-border text-xs sm:text-sm font-bold bg-white focus:ring-2 focus:ring-indigo-500 truncate">
-                                </select>
-                            </div>
-                            <span class="text-xs font-bold text-notion-muted text-center shrink-0 self-center mt-3">〜</span>
-                            <div class="flex-1 min-w-0">
-                                <label class="block text-[11px] font-bold text-notion-muted mb-0.5">終了コマ</label>
-                                <select id="resFormEndSlot" required onchange="window.handleModalDateOrPeriodChange()" class="w-full px-2.5 py-2 rounded-lg border border-notion-border text-xs sm:text-sm font-bold bg-white focus:ring-2 focus:ring-indigo-500 truncate">
-                                </select>
+                    <!-- 時間指定方法の切替 -->
+                    <div class="pt-2 border-t border-notion-border/60">
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label class="block text-xs font-bold text-notion-muted">利用時間帯の指定方法</label>
+                            <div class="inline-flex p-0.5 rounded-lg bg-notion-sidebar border border-notion-border text-[11px]">
+                                <button type="button" id="btnModePeriod" onclick="window.setTimeInputMode('period')" class="px-2 py-0.5 rounded-md font-bold bg-indigo-600 text-white shadow-2xs">コマ選択</button>
+                                <button type="button" id="btnModeCustom" onclick="window.setTimeInputMode('custom')" class="px-2 py-0.5 rounded-md font-bold text-notion-muted hover:bg-white">時刻指定</button>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- パターン②：時・分プルダウン直接指定 -->
-                    <div id="containerExactMode" class="hidden space-y-2 bg-white p-3 rounded-lg border border-indigo-100">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
-                            <!-- 開始時刻 -->
-                            <div>
-                                <label class="block text-[11px] font-bold text-indigo-700 mb-1">開始時刻</label>
-                                <div class="flex items-center gap-1">
-                                    <select id="resFormStartHour" onchange="window.handleExactTimeChange()" class="flex-1 px-2 py-1.5 rounded-md border border-notion-border text-xs font-bold bg-white">
-                                    </select>
-                                    <span class="text-xs font-bold">時</span>
-                                    <select id="resFormStartMin" onchange="window.handleExactTimeChange()" class="flex-1 px-2 py-1.5 rounded-md border border-notion-border text-xs font-bold bg-white">
-                                    </select>
-                                    <span class="text-xs font-bold">分</span>
-                                </div>
-                            </div>
-                            <!-- 終了時刻 -->
-                            <div>
-                                <label class="block text-[11px] font-bold text-indigo-700 mb-1">終了時刻</label>
-                                <div class="flex items-center gap-1">
-                                    <select id="resFormEndHour" onchange="window.handleExactTimeChange()" class="flex-1 px-2 py-1.5 rounded-md border border-notion-border text-xs font-bold bg-white">
-                                    </select>
-                                    <span class="text-xs font-bold">時</span>
-                                    <select id="resFormEndMin" onchange="window.handleExactTimeChange()" class="flex-1 px-2 py-1.5 rounded-md border border-notion-border text-xs font-bold bg-white">
-                                    </select>
-                                    <span class="text-xs font-bold">分</span>
-                                </div>
-                            </div>
+                        <!-- ① コマ範囲選択 -->
+                        <div id="timeModePeriodSection" class="flex items-center gap-1.5">
+                            <select id="resFormStartPeriod" onchange="window.handleModalDateOrPeriodChange()" class="flex-1 min-w-0 px-2 py-1.5 rounded-lg border border-notion-border text-xs font-bold bg-white focus:ring-2 focus:ring-indigo-500 truncate">
+                            </select>
+                            <span class="text-xs font-bold text-notion-muted">〜</span>
+                            <select id="resFormEndPeriod" onchange="window.handleModalDateOrPeriodChange()" class="flex-1 min-w-0 px-2 py-1.5 rounded-lg border border-notion-border text-xs font-bold bg-white focus:ring-2 focus:ring-indigo-500 truncate">
+                            </select>
                         </div>
-                        <div class="text-[11px] text-notion-muted flex items-center gap-1">
-                            <i class="ph-bold ph-info text-indigo-600"></i>
-                            <span>指定した時間帯にまたがるコマすべてに自動で予約が入ります</span>
+
+                        <!-- ② 時刻直接指定 (時・分プルダウン) -->
+                        <div id="timeModeCustomSection" class="hidden flex items-center gap-1.5 bg-white p-2 rounded-lg border border-notion-border">
+                            <div class="flex items-center gap-1">
+                                <select id="customStartHour" class="px-1.5 py-1 rounded border border-notion-border text-xs font-bold bg-white"></select>
+                                <span class="text-xs font-bold">:</span>
+                                <select id="customStartMin" class="px-1.5 py-1 rounded border border-notion-border text-xs font-bold bg-white"></select>
+                            </div>
+                            <span class="text-xs font-bold text-notion-muted">〜</span>
+                            <div class="flex items-center gap-1">
+                                <select id="customEndHour" class="px-1.5 py-1 rounded border border-notion-border text-xs font-bold bg-white"></select>
+                                <span class="text-xs font-bold">:</span>
+                                <select id="customEndMin" class="px-1.5 py-1 rounded border border-notion-border text-xs font-bold bg-white"></select>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div id="resFormConflictBanner" class="hidden p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs sm:text-sm flex items-start gap-2">
+                <div id="resFormConflictBanner" class="hidden p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-start gap-1.5">
                     <i class="ph-fill ph-warning-circle text-base text-amber-600 shrink-0 mt-0.5"></i>
                     <div id="resFormConflictText"></div>
                 </div>
 
-                <!-- Step 2: カテゴリー ＆ 予約者 -->
-                <div class="rounded-xl border border-notion-border p-3 sm:p-4 space-y-4">
+                <!-- カテゴリー ＆ 予約者 -->
+                <div class="rounded-xl border border-notion-border p-3 space-y-3">
                     <div>
-                        <label class="text-xs sm:text-sm font-bold text-notion-text mb-2 block">1. カテゴリーを選択</label>
-                        <div id="resFormCategoryGroup" class="grid grid-cols-5 gap-1.5 sm:gap-2">
+                        <label class="text-xs font-bold text-notion-text mb-1.5 block">1. カテゴリーを選択</label>
+                        <div id="resFormCategoryGroup" class="grid grid-cols-5 gap-1">
                             <!-- Populated dynamically -->
                         </div>
                     </div>
 
-                    <div class="pt-3 border-t border-notion-border">
-                        <label for="resFormUser" class="text-xs sm:text-sm font-bold text-notion-text mb-1.5 flex items-center justify-between">
-                            <span>2. だれが予約したか <span class="text-[11px] text-notion-muted font-normal">（学年・部活動など）</span></span>
-                            <span class="text-[10px] px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 font-bold">必須</span>
+                    <div class="pt-2 border-t border-notion-border">
+                        <label for="resFormUser" class="text-xs font-bold text-notion-text mb-1.5 flex items-center justify-between">
+                            <span>2. だれが予約したか <span class="text-[10px] text-notion-muted font-normal">（学年・部活動など）</span></span>
+                            <span class="text-[9px] px-1 py-0.5 rounded bg-rose-100 text-rose-700 font-bold">必須</span>
                         </label>
-                        <input type="text" id="resFormUser" oninput="window.clearUserValidationError()" placeholder="例: 佐藤 / 2学年 / バスケ部" class="w-full px-3 py-2 sm:py-2.5 rounded-lg border border-notion-border bg-white text-sm sm:text-base font-bold focus:ring-2 focus:ring-indigo-500 shadow-2xs" />
-                        <p id="resFormUserError" class="hidden mt-1 text-xs font-bold text-rose-600">予約者名を入力してください</p>
+                        <input type="text" id="resFormUser" oninput="window.clearUserValidationError()" placeholder="例: 佐藤 / 2学年 / バスケ部" class="w-full px-2.5 py-2 rounded-lg border border-notion-border bg-white text-sm font-bold focus:ring-2 focus:ring-indigo-500 shadow-2xs" />
+                        <p id="resFormUserError" class="hidden mt-1 text-[11px] font-bold text-rose-600">入力してください</p>
                         
-                        <div class="flex flex-wrap items-center gap-1.5 mt-2.5">
-                            <button type="button" onclick="window.fillUserPreset('1年')" class="text-xs px-2 py-1 rounded bg-notion-sidebar border border-notion-border hover:bg-indigo-50 font-medium">1年</button>
-                            <button type="button" onclick="window.fillUserPreset('2年')" class="text-xs px-2 py-1 rounded bg-notion-sidebar border border-notion-border hover:bg-indigo-50 font-medium">2年</button>
-                            <button type="button" onclick="window.fillUserPreset('3年')" class="text-xs px-2 py-1 rounded bg-notion-sidebar border border-notion-border hover:bg-indigo-50 font-medium">3年</button>
-                            <button type="button" onclick="window.fillUserPreset('4学年')" class="text-xs px-2 py-1 rounded bg-notion-sidebar border border-notion-border hover:bg-indigo-50 font-medium">4学年</button>
-                            <button type="button" onclick="window.fillUserPreset('1部')" class="text-xs px-2 py-1 rounded bg-notion-sidebar border border-notion-border hover:bg-indigo-50 font-medium">1部</button>
-                            <button type="button" onclick="window.fillUserPreset('2部')" class="text-xs px-2 py-1 rounded bg-notion-sidebar border border-notion-border hover:bg-indigo-50 font-medium">2部</button>
-                            <button type="button" onclick="window.fillUserPreset('3部')" class="text-xs px-2 py-1 rounded bg-notion-sidebar border border-notion-border hover:bg-indigo-50 font-medium">3部</button>
-                            <button type="button" onclick="window.fillUserPreset('4部')" class="text-xs px-2 py-1 rounded bg-notion-sidebar border border-notion-border hover:bg-indigo-50 font-medium">4部</button>
-                            <button type="button" onclick="window.fillUserPreset('7部')" class="text-xs px-2 py-1 rounded bg-notion-sidebar border border-notion-border hover:bg-indigo-50 font-medium">7部</button>
-                            <button type="button" onclick="window.fillUserPreset('8部')" class="text-xs px-2 py-1 rounded bg-notion-sidebar border border-notion-border hover:bg-indigo-50 font-medium">8部</button>
-                            <button type="button" onclick="window.fillUserPreset('教務')" class="text-xs px-2 py-1 rounded bg-notion-sidebar border border-notion-border hover:bg-indigo-50 font-medium">教務</button>
-                            <button type="button" onclick="window.fillUserPreset('生徒会')" class="text-xs px-2 py-1 rounded bg-notion-sidebar border border-notion-border hover:bg-indigo-50 font-medium">生徒会</button>
-                            <button type="button" onclick="window.fillUserPreset('部活動')" class="text-xs px-2 py-1 rounded bg-notion-sidebar border border-notion-border hover:bg-indigo-50 font-medium">部活動</button>
-                            <button type="button" onclick="window.fillUserPreset('教頭')" class="text-xs px-2 py-1 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 font-bold">教頭</button>
+                        <div class="flex flex-wrap items-center gap-1 mt-2">
+                            <button type="button" onclick="window.fillUserPreset('1年')" class="text-[11px] px-2 py-1 rounded bg-notion-sidebar border border-notion-border hover:bg-indigo-50 font-medium">1年</button>
+                            <button type="button" onclick="window.fillUserPreset('2年')" class="text-[11px] px-2 py-1 rounded bg-notion-sidebar border border-notion-border hover:bg-indigo-50 font-medium">2年</button>
+                            <button type="button" onclick="window.fillUserPreset('3年')" class="text-[11px] px-2 py-1 rounded bg-notion-sidebar border border-notion-border hover:bg-indigo-50 font-medium">3年</button>
+                            <button type="button" onclick="window.fillUserPreset('4学年')" class="text-[11px] px-2 py-1 rounded bg-notion-sidebar border border-notion-border hover:bg-indigo-50 font-medium">4学年</button>
+                            <button type="button" onclick="window.fillUserPreset('1部')" class="text-[11px] px-2 py-1 rounded bg-notion-sidebar border border-notion-border hover:bg-indigo-50 font-medium">1部</button>
+                            <button type="button" onclick="window.fillUserPreset('2部')" class="text-[11px] px-2 py-1 rounded bg-notion-sidebar border border-notion-border hover:bg-indigo-50 font-medium">2部</button>
+                            <button type="button" onclick="window.fillUserPreset('3部')" class="text-[11px] px-2 py-1 rounded bg-notion-sidebar border border-notion-border hover:bg-indigo-50 font-medium">3部</button>
+                            <button type="button" onclick="window.fillUserPreset('4部')" class="text-[11px] px-2 py-1 rounded bg-notion-sidebar border border-notion-border hover:bg-indigo-50 font-medium">4部</button>
+                            <button type="button" onclick="window.fillUserPreset('7部')" class="text-[11px] px-2 py-1 rounded bg-notion-sidebar border border-notion-border hover:bg-indigo-50 font-medium">7部</button>
+                            <button type="button" onclick="window.fillUserPreset('8部')" class="text-[11px] px-2 py-1 rounded bg-notion-sidebar border border-notion-border hover:bg-indigo-50 font-medium">8部</button>
+                            <button type="button" onclick="window.fillUserPreset('教務')" class="text-[11px] px-2 py-1 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 font-bold">教務</button>
+                            <button type="button" onclick="window.fillUserPreset('生徒会')" class="text-[11px] px-2 py-1 rounded bg-notion-sidebar border border-notion-border hover:bg-indigo-50 font-medium">生徒会</button>
+                            <button type="button" onclick="window.fillUserPreset('部活動')" class="text-[11px] px-2 py-1 rounded bg-notion-sidebar border border-notion-border hover:bg-indigo-50 font-medium">部活動</button>
+                            <button type="button" onclick="window.fillUserPreset('教頭')" class="text-[11px] px-2 py-1 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 font-bold">教頭</button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Step 3: 詳細 -->
-                <div class="rounded-xl border border-notion-border bg-notion-sidebar/40 p-3 sm:p-4 space-y-2.5">
-                    <h4 class="text-xs font-bold text-notion-text flex items-center gap-1.5"><i class="ph-bold ph-pencil-simple text-indigo-600"></i>詳細（任意）</h4>
-                    <input type="text" id="resFormTitle" placeholder="授業名・利用目的など" class="w-full px-2.5 py-1.5 rounded-lg border border-notion-border text-xs sm:text-sm bg-white" />
-                    <input type="text" id="resFormMemo" placeholder="連絡事項・備品メモなど" class="w-full px-2.5 py-1.5 rounded-lg border border-notion-border text-xs sm:text-sm bg-white" />
+                <!-- 詳細 (任意) -->
+                <div class="rounded-xl border border-notion-border bg-notion-sidebar/40 p-3 space-y-2">
+                    <h4 class="text-xs font-bold text-notion-text flex items-center gap-1"><i class="ph-bold ph-pencil-simple text-indigo-600"></i>詳細（任意）</h4>
+                    <input type="text" id="resFormTitle" placeholder="授業名・利用目的など" class="w-full px-2.5 py-1.5 rounded-lg border border-notion-border text-xs" />
+                    <input type="text" id="resFormMemo" placeholder="連絡事項・備品メモなど" class="w-full px-2.5 py-1.5 rounded-lg border border-notion-border text-xs" />
                 </div>
-
-                <div class="h-14 sm:h-0"></div>
             </form>
             
-            <div class="absolute bottom-0 left-0 right-0 p-3 sm:p-4 bg-white border-t border-notion-border flex items-center justify-between gap-2 rounded-b-2xl sm:rounded-b-3xl">
-                <button type="button" id="btnDeleteReservation" class="hidden px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold text-rose-600 bg-rose-50 border border-rose-200 hover:bg-rose-100 transition flex items-center gap-1">
-                    <i class="ph-bold ph-trash"></i> 削除
-                </button>
-                <div class="flex items-center gap-2 ml-auto">
-                    <button type="button" id="btnStartTouchMove" onclick="window.triggerMoveFromModal()" class="hidden px-3 py-2 rounded-xl text-xs sm:text-sm font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 transition items-center gap-1">
+            <!-- フッター操作ボタン -->
+            <div class="absolute bottom-0 left-0 right-0 p-3 bg-white border-t border-notion-border flex items-center justify-between gap-2 rounded-b-2xl shadow-lg z-20">
+                <div class="flex items-center gap-1.5">
+                    <button type="button" id="btnDeleteReservation" class="hidden px-3 py-2 rounded-lg text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 hover:bg-rose-100 transition">
+                        削除
+                    </button>
+                    <button type="button" id="btnStartTouchMove" onclick="window.triggerMoveFromModal()" class="hidden px-3 py-2 rounded-lg text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 transition flex items-center gap-1">
                         <i class="ph-bold ph-arrows-out-cardinal text-sm"></i> 移動
                     </button>
-                    <button type="button" onclick="window.closeReservationModal()" class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold text-notion-text bg-notion-sidebar border border-notion-border hover:bg-notion-hover transition">
+                </div>
+                <div class="flex items-center gap-2 ml-auto">
+                    <button type="button" onclick="window.closeReservationModal()" class="px-3.5 py-2 rounded-lg text-xs font-bold text-notion-text bg-notion-sidebar border border-notion-border hover:bg-notion-border transition">
                         キャンセル
                     </button>
-                    <button type="submit" form="reservationForm" class="px-5 py-2 rounded-xl text-xs sm:text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 flex items-center justify-center gap-1.5 shadow-md transition">
-                        <i class="ph-bold ph-check-circle text-base"></i>
+                    <button type="submit" onclick="document.getElementById('reservationForm').dispatchEvent(new Event('submit', {cancelable: true, bubbles: true}))" class="px-5 py-2 rounded-lg text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 flex items-center justify-center gap-1.5 shadow-md transition">
+                        <i class="ph-bold ph-check-circle text-sm"></i>
                         <span id="btnSubmitReservationText">予約確定</span>
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 教室管理モーダル -->
+    <div id="roomManageModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl border border-notion-border shadow-2xl max-w-md w-full flex flex-col max-h-[90vh] overflow-hidden">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-notion-border bg-notion-sidebar">
+                <div class="flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center">
+                        <i class="ph-bold ph-door-open text-base"></i>
+                    </div>
+                    <h3 class="font-bold text-sm text-notion-text">特別教室の管理・追加・並び替え</h3>
+                </div>
+                <button type="button" onclick="window.closeRoomManageModal()" class="p-1 rounded-lg text-notion-muted hover:text-notion-text hover:bg-white transition">
+                    <i class="ph-bold ph-x text-lg"></i>
+                </button>
+            </div>
+            
+            <div class="p-4 space-y-4 overflow-y-auto flex-1 no-scrollbar">
+                <!-- 新規教室追加フォーム -->
+                <div class="p-3 rounded-xl border border-indigo-100 bg-indigo-50/40 space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-indigo-900 flex items-center gap-1.5">
+                            <i class="ph-bold ph-plus-circle text-sm text-indigo-600"></i> 新しい教室を追加
+                        </span>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <input type="text" id="newRoomName" placeholder="教室名 (例: 図書室)" class="px-2.5 py-1.5 rounded-lg border border-notion-border text-xs bg-white font-bold" />
+                        <div class="flex items-center gap-1.5">
+                            <select id="newRoomIcon" class="flex-1 px-2 py-1.5 rounded-lg border border-notion-border text-xs bg-white font-bold">
+                                <option value="ph-door-open">🚪 汎用教室</option>
+                                <option value="ph-presentation-chart">📊 多目的・講堂</option>
+                                <option value="ph-basketball">🏀 体育館・屋外</option>
+                                <option value="ph-shield-chevron">🥋 武道・格技</option>
+                                <option value="ph-music-notes">🎵 音楽・音響</option>
+                                <option value="ph-piano-keys">🎹 ピアノ・楽器</option>
+                                <option value="ph-chats-circle">💬 談話・ラウンジ</option>
+                                <option value="ph-users-three">👥 会議・ミーティング</option>
+                                <option value="ph-books">📚 図書・自習</option>
+                                <option value="ph-desktop">💻 PC・情報室</option>
+                                <option value="ph-flask">🧪 理科室・実験</option>
+                                <option value="ph-palette">🎨 美術室・工作</option>
+                                <option value="ph-cooking-pot">🍳 調理・家庭科</option>
+                            </select>
+                            <select id="newRoomColor" class="w-20 px-1.5 py-1.5 rounded-lg border border-notion-border text-xs bg-white font-bold">
+                                <option value="indigo">藍 (Indigo)</option>
+                                <option value="emerald">緑 (Emerald)</option>
+                                <option value="orange">橙 (Orange)</option>
+                                <option value="sky">青 (Sky)</option>
+                                <option value="violet">紫 (Violet)</option>
+                                <option value="pink">桃 (Pink)</option>
+                                <option value="amber">黄 (Amber)</option>
+                                <option value="teal">青緑 (Teal)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="button" onclick="window.addNewRoom()" class="w-full py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition flex items-center justify-center gap-1 shadow-2xs">
+                        <i class="ph-bold ph-plus text-xs"></i> 教室を追加する
+                    </button>
+                </div>
+
+                <!-- 既存教室リスト（並び替え・削除） -->
+                <div>
+                    <label class="block text-xs font-bold text-notion-muted mb-2">現在の登録教室一覧（上下ボタンで並び替え）</label>
+                    <div id="roomManageList" class="space-y-1.5">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-3 bg-notion-sidebar border-t border-notion-border flex items-center justify-between">
+                <button type="button" onclick="window.resetRoomsToDefaultOrder()" class="text-xs font-bold text-rose-600 hover:underline">
+                    標準教室セットに戻す
+                </button>
+                <button type="button" onclick="window.closeRoomManageModal()" class="px-4 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 transition">
+                    完了
+                </button>
             </div>
         </div>
     </div>
@@ -522,21 +553,19 @@
         const database = getDatabase(app);
 
         const DAY_NAMES = ['日', '月', '火', '水', '木', '金', '土'];
-
-        // 🌟 12コマ定義（早朝・朝学活・中休み追加） 🌟
         const TIME_PERIODS = [
-            { id: 'p_early', label: '早朝',           time: '07:30 - 08:15', startOnly: '07:30〜', endOnly: '〜08:15', short: '早朝',   startMin: 7*60+30, endMin: 8*60+15 },
-            { id: 'p_morn',  label: '朝学活',         time: '08:15 - 08:40', startOnly: '08:15〜', endOnly: '〜08:40', short: '朝学活', startMin: 8*60+15, endMin: 8*60+40 },
-            { id: 'p1',      label: '1校時',          time: '08:50 - 09:40', startOnly: '08:50〜', endOnly: '〜09:40', short: '1校時',  startMin: 8*60+50, endMin: 9*60+40 },
-            { id: 'p2',      label: '2校時',          time: '09:50 - 10:40', startOnly: '09:50〜', endOnly: '〜10:40', short: '2校時',  startMin: 9*60+50, endMin: 10*60+40 },
-            { id: 'p_break', label: '休み時間',       time: '10:40 - 10:55', startOnly: '10:40〜', endOnly: '〜10:55', short: '休み',   startMin: 10*60+40, endMin: 10*60+55 },
-            { id: 'p3',      label: '3校時',          time: '10:55 - 11:45', startOnly: '10:55〜', endOnly: '〜11:45', short: '3校時',  startMin: 10*60+55, endMin: 11*60+45 },
-            { id: 'p4',      label: '4校時',          time: '11:55 - 12:45', startOnly: '11:55〜', endOnly: '〜12:45', short: '4校時',  startMin: 11*60+55, endMin: 12*60+45 },
-            { id: 'lunch',   label: '昼休み',         time: '12:45 - 13:35', startOnly: '12:45〜', endOnly: '〜13:35', short: '昼休',   startMin: 12*60+45, endMin: 13*60+35 },
-            { id: 'p5',      label: '5校時',          time: '13:40 - 14:30', startOnly: '13:40〜', endOnly: '〜14:30', short: '5校時',  startMin: 13*60+40, endMin: 14*60+30 },
-            { id: 'p6',      label: '6校時',          time: '14:40 - 15:30', startOnly: '14:40〜', endOnly: '〜15:30', short: '6校時',  label5Period: '放課後(5限後)', time5Period: '14:40 - 15:30', startMin: 14*60+40, endMin: 15*60+30 },
-            { id: 'after1',  label: '放課後(〜16:30)', time: '15:30 - 16:30', startOnly: '15:30〜', endOnly: '〜16:30', short: '〜16:30', startMin: 15*60+30, endMin: 16*60+30 },
-            { id: 'after2',  label: '16:30以降(フリー)', time: '16:30〜 時間自由', startOnly: '16:30〜', endOnly: '〜18:30', short: '16:30〜', startMin: 16*60+30, endMin: 18*60+30, isFreeSlot: true }
+            { id: 'p0',     label: '早朝',              time: '〜 08:15',       short: '早朝',  defaultStart: '07:30', defaultEnd: '08:15' },
+            { id: 'p_morn', label: '朝学活',            time: '08:15 - 08:40',  short: '朝学活', defaultStart: '08:15', defaultEnd: '08:40' },
+            { id: 'p1',     label: '1校時',             time: '08:50 - 09:40',  short: '1校時', defaultStart: '08:50', defaultEnd: '09:40' },
+            { id: 'p2',     label: '2校時',             time: '09:50 - 10:40',  short: '2校時', defaultStart: '09:50', defaultEnd: '10:40' },
+            { id: 'p_break',label: '休み時間',          time: '10:40 - 10:55',  short: '休み',  defaultStart: '10:40', defaultEnd: '10:55' },
+            { id: 'p3',     label: '3校時',             time: '10:55 - 11:45',  short: '3校時', defaultStart: '10:55', defaultEnd: '11:45' },
+            { id: 'p4',     label: '4校時',             time: '11:55 - 12:45',  short: '4校時', defaultStart: '11:55', defaultEnd: '12:45' },
+            { id: 'lunch',  label: '昼休み',            time: '12:45 - 13:35',  short: '昼休',  defaultStart: '12:45', defaultEnd: '13:35' },
+            { id: 'p5',     label: '5校時',             time: '13:40 - 14:30',  short: '5校時', defaultStart: '13:40', defaultEnd: '14:30' },
+            { id: 'p6',     label: '6校時',             time: '14:40 - 15:30',  short: '6校時', defaultStart: '14:40', defaultEnd: '15:30', label5Period: '放課後(5限後)', time5Period: '14:40 - 15:30' },
+            { id: 'after1', label: '放課後(〜16:30)',   time: '15:30 - 16:30',  short: '〜16:30',defaultStart: '15:30', defaultEnd: '16:30' },
+            { id: 'after2', label: '16:30以降(フリー)', time: '16:30〜 時間自由',short: '16:30〜',defaultStart: '16:30', defaultEnd: '18:00', isFreeSlot: true }
         ];
 
         const CATEGORIES = [
@@ -558,14 +587,15 @@
             teal:    { badgeBg: 'bg-teal-100',    badgeText: 'text-teal-700' }
         };
 
+        // 指定の標準順序（多目的、体育館、談話室、会議室、柔剣道場、1音、2音）
         const DEFAULT_ROOMS = [
-            { id: 'gym',      name: '体育館',   icon: 'ph-basketball',         color: 'orange' },
-            { id: 'martial',  name: '柔剣道場', icon: 'ph-shield-chevron',     color: 'amber' },
             { id: 'multi',    name: '多目的室', icon: 'ph-presentation-chart', color: 'emerald' },
-            { id: 'music1',   name: '1音',      icon: 'ph-music-notes',        color: 'violet' },
-            { id: 'music2',   name: '2音',      icon: 'ph-piano-keys',         color: 'pink' },
+            { id: 'gym',      name: '体育館',   icon: 'ph-basketball',         color: 'orange' },
             { id: 'lounge',   name: '談話室',   icon: 'ph-chats-circle',       color: 'sky' },
-            { id: 'meeting',  name: '会議室',   icon: 'ph-users-three',        color: 'indigo' }
+            { id: 'meeting',  name: '会議室',   icon: 'ph-users-three',        color: 'indigo' },
+            { id: 'martial',  name: '柔剣道場', icon: 'ph-shield-chevron',     color: 'amber' },
+            { id: 'music1',   name: '1音',      icon: 'ph-music-notes',        color: 'violet' },
+            { id: 'music2',   name: '2音',      icon: 'ph-piano-keys',         color: 'pink' }
         ];
 
         function formatDateISO(dateObj) {
@@ -579,57 +609,39 @@
         function formatJapaneseDateLabel(isoStr) { const dt = parseDateISO(isoStr); return `${dt.getFullYear()}年${dt.getMonth() + 1}月${dt.getDate()}日（${DAY_NAMES[dt.getDay()]}）`; }
         function escapeHTML(str) { return str ? String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[m]) : ''; }
         function formatShortRoomName(name) {
-            const map = { '体育館':'体育館', '柔剣道場':'柔剣道', '多目的室':'多目的', '1音':'1音', '2音':'2音', '談話室':'談話室', '会議室':'会議室' };
+            const map = { '多目的室':'多目的', '体育館':'体育館', '談話室':'談話室', '会議室':'会議室', '柔剣道場':'柔剣道', '1音':'1音', '2音':'2音' };
             return map[name] || (name.length > 3 ? name.substring(0, 3) : name);
         }
 
+        const todayISO = formatDateISO(new Date());
+
         const state = {
-            todayISO: formatDateISO(new Date()),
-            selectedDate: formatDateISO(new Date()),
+            todayISO: todayISO,
+            selectedDate: todayISO,
             currentView: 'weekly',
             calendarYear: new Date().getFullYear(),
             calendarMonth: new Date().getMonth(),
             selectedCategory: 'class',
             draggedReservationId: null,
             movingReservationId: null,
-            timeInputMode: 'slot', // 'slot' or 'exact'
             dayScheduleModes: {},
             rooms: JSON.parse(JSON.stringify(DEFAULT_ROOMS)),
             reservations: []
         };
 
-        function cleanupOldReservations() {
-            const currentToday = state.todayISO;
-            const oldIdsToDelete = [];
-            state.reservations.forEach(res => {
-                if (res.date < currentToday) oldIdsToDelete.push(res.id);
-            });
-            oldIdsToDelete.forEach(id => remove(ref(database, 'reservations/' + id)));
-            if (oldIdsToDelete.length > 0) {
-                state.reservations = state.reservations.filter(res => !oldIdsToDelete.includes(res.id));
-            }
-        }
-
-        function checkAndHandleDateChange() {
-            const nowISO = formatDateISO(new Date());
-            if (nowISO !== state.todayISO) {
-                const wasViewingToday = (state.selectedDate === state.todayISO);
-                state.todayISO = nowISO;
-                if (wasViewingToday) state.selectedDate = nowISO;
-                const now = new Date();
-                state.calendarYear = now.getFullYear();
-                state.calendarMonth = now.getMonth();
-                cleanupOldReservations();
-                renderAll();
-                showToast(`日付が更新されました（${now.getMonth()+1}/${now.getDate()}）`, 'info');
-            }
-        }
-        setInterval(checkAndHandleDateChange, 60000);
-        document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkAndHandleDateChange(); });
-        window.addEventListener('focus', checkAndHandleDateChange);
-
         let hasCheckedForOldData = false;
         let isInitialLoad = true;
+
+        // 教室並び順のFirebase同期
+        onValue(ref(database, 'roomsConfig'), (snapshot) => {
+            const data = snapshot.val();
+            if (data && Array.isArray(data) && data.length > 0) {
+                state.rooms = data;
+            } else {
+                state.rooms = JSON.parse(JSON.stringify(DEFAULT_ROOMS));
+            }
+            renderAll();
+        });
 
         onValue(ref(database, 'reservations'), (snapshot) => {
             const data = snapshot.val();
@@ -641,28 +653,72 @@
 
             if (!hasCheckedForOldData && data) {
                 hasCheckedForOldData = true;
-                cleanupOldReservations();
+                cleanOldReservations();
             }
+            
             renderAll();
 
             if (isInitialLoad) {
                 isInitialLoad = false;
-                document.getElementById('cloudStatusText').textContent = '同期完了 (共有中)';
+                const cloudText = document.getElementById('cloudStatusText');
+                if (cloudText) cloudText.textContent = '同期完了 (共有中)';
                 const dot = document.getElementById('cloudStatusDot');
-                dot.classList.remove('bg-sky-500'); dot.classList.add('bg-emerald-500');
+                if (dot) {
+                    dot.classList.remove('bg-sky-500');
+                    dot.classList.add('bg-emerald-500');
+                }
                 const badge = document.getElementById('cloudStatusBadge');
-                badge.classList.replace('bg-sky-50', 'bg-emerald-50');
-                badge.classList.replace('border-sky-200', 'border-emerald-200');
-                badge.classList.replace('text-sky-700', 'text-emerald-700');
+                if (badge) {
+                    badge.classList.replace('bg-sky-50', 'bg-emerald-50');
+                    badge.classList.replace('border-sky-200', 'border-emerald-200');
+                    badge.classList.replace('text-sky-700', 'text-emerald-700');
+                }
                 const mDot = document.getElementById('mobileCloudDot');
-                mDot.classList.remove('bg-sky-500'); mDot.classList.add('bg-emerald-500');
+                if (mDot) {
+                    mDot.classList.remove('bg-sky-500');
+                    mDot.classList.add('bg-emerald-500');
+                }
                 const mBadge = document.getElementById('mobileCloudStatus');
-                mBadge.classList.replace('bg-sky-50', 'bg-emerald-50');
-                mBadge.classList.replace('border-sky-100', 'border-emerald-200');
-                mBadge.classList.replace('text-sky-600', 'text-emerald-700');
-                mBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>同期済`;
+                if (mBadge) {
+                    mBadge.classList.replace('bg-sky-50', 'bg-emerald-50');
+                    mBadge.classList.replace('border-sky-100', 'border-emerald-200');
+                    mBadge.classList.replace('text-sky-600', 'text-emerald-700');
+                    mBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>同期済`;
+                }
             }
         });
+
+        function cleanOldReservations() {
+            const oldIdsToDelete = [];
+            state.reservations.forEach(res => {
+                if (res.date < state.todayISO) oldIdsToDelete.push(res.id);
+            });
+            oldIdsToDelete.forEach(id => {
+                remove(ref(database, 'reservations/' + id));
+            });
+            if (oldIdsToDelete.length > 0) {
+                state.reservations = state.reservations.filter(res => !oldIdsToDelete.includes(res.id));
+            }
+        }
+
+        function checkAndHandleDateChange() {
+            const currentRealToday = formatDateISO(new Date());
+            if (currentRealToday !== state.todayISO) {
+                const wasViewingToday = (state.selectedDate === state.todayISO);
+                state.todayISO = currentRealToday;
+                if (wasViewingToday) {
+                    state.selectedDate = currentRealToday;
+                }
+                cleanOldReservations();
+                renderAll();
+                showToast(`日付が更新されました（${formatJapaneseDateLabel(currentRealToday)}）`, 'info');
+            }
+        }
+        setInterval(checkAndHandleDateChange, 60000);
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) checkAndHandleDateChange();
+        });
+        window.addEventListener('focus', checkAndHandleDateChange);
 
         function getDayScheduleMode(dateStr) { return state.dayScheduleModes[dateStr] || '6period'; }
         function getPeriodDisplayInfo(p, dateStr) {
@@ -676,19 +732,12 @@
         function getCategoryById(id) { return CATEGORIES.find(c => c.id === id) || CATEGORIES[0]; }
 
         function isReservationInPeriod(res, periodId) {
-            const startId = res.startSlot || res.startPeriodId || res.periodId || 'p1';
-            const endId = res.endSlot || res.endPeriodId || res.startSlot || res.periodId || 'p1';
-            const sIdx = TIME_PERIODS.findIndex(p => p.id === startId);
-            const eIdx = TIME_PERIODS.findIndex(p => p.id === endId);
-            const curIdx = TIME_PERIODS.findIndex(p => p.id === periodId);
-            if (sIdx === -1 || curIdx === -1) return false;
-            const minIdx = Math.min(sIdx, eIdx === -1 ? sIdx : eIdx);
-            const maxIdx = Math.max(sIdx, eIdx === -1 ? sIdx : eIdx);
-            return curIdx >= minIdx && curIdx <= maxIdx;
-        }
-
-        function findReservation(r, d, p) {
-            return state.reservations.find(res => res.roomId === r && res.date === d && isReservationInPeriod(res, p));
+            const pIdx = TIME_PERIODS.findIndex(p => p.id === periodId);
+            if (pIdx === -1) return false;
+            const startIdx = TIME_PERIODS.findIndex(p => p.id === (res.startPeriodId || res.periodId));
+            const endIdx = TIME_PERIODS.findIndex(p => p.id === (res.endPeriodId || res.periodId));
+            if (startIdx === -1 || endIdx === -1) return res.periodId === periodId;
+            return pIdx >= startIdx && pIdx <= endIdx;
         }
 
         window.shiftSelectedDate = function(delta) { state.selectedDate = addDaysISO(state.selectedDate, delta); renderAll(); };
@@ -701,7 +750,213 @@
             renderAll();
             showToast(`${parseDateISO(state.selectedDate).getMonth()+1}/${parseDateISO(state.selectedDate).getDate()} を「${state.dayScheduleModes[state.selectedDate] === '5period' ? '5校時日課' : '6校時日課'}」に変更しました`, 'info');
         };
-        window.openAddRoomModal = function() { showToast('教室管理機能は現在準備中です', 'info'); };
+
+        window.openAddRoomModal = function() {
+            const m = document.getElementById('roomManageModal');
+            renderRoomManageList();
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        };
+        window.closeRoomManageModal = function() {
+            const m = document.getElementById('roomManageModal');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        };
+
+        // 教室編集中のインデックス保持
+        let editingRoomIndex = null;
+        let deletingRoomIndex = null;
+
+        // 教室一覧の描画（編集・削除インライン対応・並び替え）
+        function renderRoomManageList() {
+            const listEl = document.getElementById('roomManageList');
+            if (!listEl) return;
+            listEl.innerHTML = state.rooms.map((room, index) => {
+                const theme = ROOM_COLOR_MAP[room.color] || ROOM_COLOR_MAP.indigo;
+
+                // 削除確認中のインライン表示
+                if (deletingRoomIndex === index) {
+                    return `
+                        <div class="flex items-center justify-between p-2 rounded-xl bg-rose-50 border border-rose-200 shadow-2xs animate-fadeIn">
+                            <span class="text-xs font-bold text-rose-800">「${escapeHTML(room.name)}」を削除？</span>
+                            <div class="flex items-center gap-1">
+                                <button type="button" onclick="window.cancelDeleteRoom()" class="px-2 py-1 text-[11px] font-bold rounded bg-white border border-rose-300 text-rose-700 hover:bg-rose-100">やめる</button>
+                                <button type="button" onclick="window.confirmDeleteRoom(${index})" class="px-2.5 py-1 text-[11px] font-bold rounded bg-rose-600 text-white hover:bg-rose-700 shadow-2xs">削除</button>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // 編集中のインラインフォーム
+                if (editingRoomIndex === index) {
+                    return `
+                        <div class="p-2.5 rounded-xl bg-indigo-50/60 border border-indigo-200 shadow-2xs space-y-2">
+                            <div class="flex items-center gap-2">
+                                <input type="text" id="editRoomName_${index}" value="${escapeHTML(room.name)}" class="flex-1 px-2 py-1 text-xs font-bold rounded border border-notion-border bg-white" placeholder="教室名" />
+                                <select id="editRoomColor_${index}" class="px-1.5 py-1 text-xs font-bold rounded border border-notion-border bg-white">
+                                    <option value="indigo" ${room.color==='indigo'?'selected':''}>藍</option>
+                                    <option value="emerald" ${room.color==='emerald'?'selected':''}>緑</option>
+                                    <option value="orange" ${room.color==='orange'?'selected':''}>橙</option>
+                                    <option value="sky" ${room.color==='sky'?'selected':''}>青</option>
+                                    <option value="violet" ${room.color==='violet'?'selected':''}>紫</option>
+                                    <option value="pink" ${room.color==='pink'?'selected':''}>桃</option>
+                                    <option value="amber" ${room.color==='amber'?'selected':''}>黄</option>
+                                    <option value="teal" ${room.color==='teal'?'selected':''}>青緑</option>
+                                </select>
+                            </div>
+                            <div class="flex items-center justify-between gap-2">
+                                <select id="editRoomIcon_${index}" class="flex-1 px-2 py-1 text-xs font-bold rounded border border-notion-border bg-white">
+                                    <option value="ph-door-open" ${room.icon==='ph-door-open'?'selected':''}>🚪 汎用教室</option>
+                                    <option value="ph-presentation-chart" ${room.icon==='ph-presentation-chart'?'selected':''}>📊 多目的・講堂</option>
+                                    <option value="ph-basketball" ${room.icon==='ph-basketball'?'selected':''}>🏀 体育館・屋外</option>
+                                    <option value="ph-shield-chevron" ${room.icon==='ph-shield-chevron'?'selected':''}>🥋 武道・格技</option>
+                                    <option value="ph-music-notes" ${room.icon==='ph-music-notes'?'selected':''}>🎵 音楽・音響</option>
+                                    <option value="ph-piano-keys" ${room.icon==='ph-piano-keys'?'selected':''}>🎹 ピアノ・楽器</option>
+                                    <option value="ph-chats-circle" ${room.icon==='ph-chats-circle'?'selected':''}>💬 談話・ラウンジ</option>
+                                    <option value="ph-users-three" ${room.icon==='ph-users-three'?'selected':''}>👥 会議・ミーティング</option>
+                                    <option value="ph-books" ${room.icon==='ph-books'?'selected':''}>📚 図書・自習</option>
+                                    <option value="ph-desktop" ${room.icon==='ph-desktop'?'selected':''}>💻 PC・情報室</option>
+                                    <option value="ph-flask" ${room.icon==='ph-flask'?'selected':''}>🧪 理科室・実験</option>
+                                    <option value="ph-palette" ${room.icon==='ph-palette'?'selected':''}>🎨 美術室・工作</option>
+                                    <option value="ph-cooking-pot" ${room.icon==='ph-cooking-pot'?'selected':''}>🍳 調理・家庭科</option>
+                                </select>
+                                <div class="flex items-center gap-1">
+                                    <button type="button" onclick="window.cancelEditRoom()" class="px-2 py-1 text-xs font-bold rounded bg-white border border-notion-border text-notion-muted">取消</button>
+                                    <button type="button" onclick="window.saveEditRoom(${index})" class="px-2.5 py-1 text-xs font-bold rounded bg-indigo-600 text-white hover:bg-indigo-700 shadow-2xs">保存</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="flex items-center justify-between p-2 rounded-xl bg-white border border-notion-border shadow-2xs hover:bg-slate-50/50 transition">
+                        <div class="flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-md ${theme.badgeBg} ${theme.badgeText} flex items-center justify-center shrink-0">
+                                <i class="ph-bold ${room.icon} text-xs"></i>
+                            </span>
+                            <span class="font-bold text-xs text-notion-text">${escapeHTML(room.name)}</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <button type="button" onclick="window.startEditRoom(${index})" class="p-1 rounded text-notion-muted hover:text-indigo-600 hover:bg-indigo-50 border border-notion-border" title="名称・アイコン・色を変更">
+                                <i class="ph-bold ph-pencil-simple text-xs"></i>
+                            </button>
+                            <button type="button" onclick="window.moveRoomOrder(${index}, -1)" ${index === 0 ? 'disabled class="p-1 rounded text-slate-300"' : 'class="p-1 rounded text-notion-text hover:bg-notion-sidebar border border-notion-border"'} title="上へ">
+                                <i class="ph-bold ph-arrow-up text-xs"></i>
+                            </button>
+                            <button type="button" onclick="window.moveRoomOrder(${index}, 1)" ${index === state.rooms.length - 1 ? 'disabled class="p-1 rounded text-slate-300"' : 'class="p-1 rounded text-notion-text hover:bg-notion-sidebar border border-notion-border"'} title="下へ">
+                                <i class="ph-bold ph-arrow-down text-xs"></i>
+                            </button>
+                            <button type="button" onclick="window.promptDeleteRoom(${index})" class="p-1 rounded text-rose-500 hover:bg-rose-50 border border-rose-200 ml-1" title="教室を削除">
+                                <i class="ph-bold ph-trash text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 教室編集の開始・キャンセル・保存
+        window.startEditRoom = function(index) {
+            editingRoomIndex = index;
+            deletingRoomIndex = null;
+            renderRoomManageList();
+        };
+        window.cancelEditRoom = function() {
+            editingRoomIndex = null;
+            renderRoomManageList();
+        };
+        window.saveEditRoom = function(index) {
+            const name = document.getElementById(`editRoomName_${index}`).value.trim();
+            if (!name) {
+                showToast('教室名を入力してください', 'error');
+                return;
+            }
+            const color = document.getElementById(`editRoomColor_${index}`).value;
+            const icon = document.getElementById(`editRoomIcon_${index}`).value;
+
+            state.rooms[index].name = name;
+            state.rooms[index].color = color;
+            state.rooms[index].icon = icon;
+
+            set(ref(database, 'roomsConfig'), state.rooms);
+            editingRoomIndex = null;
+            renderRoomManageList();
+            renderAll();
+            showToast(`教室情報を更新しました`);
+        };
+
+        // 教室削除のインライン2段階確認
+        window.promptDeleteRoom = function(index) {
+            if (state.rooms.length <= 1) {
+                showToast('教室は最低1つ必要です', 'error');
+                return;
+            }
+            editingRoomIndex = null;
+            deletingRoomIndex = index;
+            renderRoomManageList();
+        };
+        window.cancelDeleteRoom = function() {
+            deletingRoomIndex = null;
+            renderRoomManageList();
+        };
+        window.confirmDeleteRoom = function(index) {
+            const targetRoom = state.rooms[index];
+            if (!targetRoom) return;
+            const deletedName = targetRoom.name;
+
+            state.rooms.splice(index, 1);
+            set(ref(database, 'roomsConfig'), state.rooms);
+            deletingRoomIndex = null;
+            renderRoomManageList();
+            renderAll();
+            showToast(`「${deletedName}」を削除しました`, 'info');
+        };
+
+        // 教室の新規追加
+        window.addNewRoom = function() {
+            const nameInput = document.getElementById('newRoomName');
+            const name = nameInput.value.trim();
+            if (!name) {
+                showToast('教室名を入力してください', 'error');
+                return;
+            }
+            const icon = document.getElementById('newRoomIcon').value;
+            const color = document.getElementById('newRoomColor').value;
+            const newId = 'room_' + Date.now().toString(36);
+
+            const newRoom = { id: newId, name: name, icon: icon, color: color };
+            state.rooms.push(newRoom);
+            set(ref(database, 'roomsConfig'), state.rooms);
+
+            nameInput.value = '';
+            renderRoomManageList();
+            renderAll();
+            showToast(`「${name}」を追加しました`);
+        };
+
+        window.moveRoomOrder = function(index, dir) {
+            const targetIdx = index + dir;
+            if (targetIdx < 0 || targetIdx >= state.rooms.length) return;
+            const updated = [...state.rooms];
+            const temp = updated[index];
+            updated[index] = updated[targetIdx];
+            updated[targetIdx] = temp;
+            state.rooms = updated;
+            set(ref(database, 'roomsConfig'), updated);
+            renderRoomManageList();
+            renderAll();
+        };
+
+        window.resetRoomsToDefaultOrder = function() {
+            state.rooms = JSON.parse(JSON.stringify(DEFAULT_ROOMS));
+            set(ref(database, 'roomsConfig'), state.rooms);
+            editingRoomIndex = null;
+            deletingRoomIndex = null;
+            renderRoomManageList();
+            renderAll();
+            showToast('教室を標準セットに戻しました', 'info');
+        };
 
         function renderAll() {
             renderHeaderControls();
@@ -716,49 +971,52 @@
         }
 
         function renderHeaderControls() {
-            document.getElementById('headerDatePicker').value = state.selectedDate;
-            document.getElementById('selectedDayOfWeek').textContent = `${DAY_NAMES[parseDateISO(state.selectedDate).getDay()]}曜日`;
-
-            const liveBadge = document.getElementById('liveTodayBadge');
-            if (liveBadge) {
-                liveBadge.classList.toggle('sm:inline-flex', state.selectedDate === state.todayISO);
-                liveBadge.classList.toggle('hidden', state.selectedDate !== state.todayISO);
-            }
+            const dateInput = document.getElementById('headerDatePicker');
+            if (dateInput) dateInput.value = state.selectedDate;
+            const dayOfWeekEl = document.getElementById('selectedDayOfWeek');
+            if (dayOfWeekEl) dayOfWeekEl.textContent = `${DAY_NAMES[parseDateISO(state.selectedDate).getDay()]}曜日`;
 
             const modeBtn = document.getElementById('btnDayScheduleMode');
             const modeLabel = document.getElementById('dayScheduleModeLabel');
-            if (getDayScheduleMode(state.selectedDate) === '5period') {
-                modeBtn.className = 'px-2 py-1 sm:px-3 sm:py-1.5 text-[11px] sm:text-sm font-bold rounded-md bg-amber-50 text-amber-800 border border-amber-300 flex items-center gap-1 shadow-2xs';
-                modeLabel.textContent = '5校時日課';
-            } else {
-                modeBtn.className = 'px-2 py-1 sm:px-3 sm:py-1.5 text-[11px] sm:text-sm font-bold rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 flex items-center gap-1 shadow-2xs';
-                modeLabel.textContent = '6校時日課';
+            if (modeBtn && modeLabel) {
+                if (getDayScheduleMode(state.selectedDate) === '5period') {
+                    modeBtn.className = 'px-2 py-1 text-[10px] sm:text-xs font-bold rounded-lg bg-amber-50 text-amber-800 border border-amber-300 flex items-center gap-1 shadow-2xs';
+                    modeLabel.textContent = '5校時日課';
+                } else {
+                    modeBtn.className = 'px-2 py-1 text-[10px] sm:text-xs font-bold rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 flex items-center gap-1 shadow-2xs';
+                    modeLabel.textContent = '6校時日課';
+                }
             }
+
+            const liveBadge = document.getElementById('liveTodayBadge');
+            if (liveBadge) liveBadge.classList.toggle('hidden', state.selectedDate !== state.todayISO);
 
             ['matrix', 'weekly', 'calendar'].forEach(tab => {
                 const btn = document.getElementById(`tab-${tab}`);
                 const mobBtn = document.getElementById(`mob-tab-${tab}`);
                 if (tab === state.currentView) {
-                    if (btn) btn.className = 'view-tab flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold bg-indigo-600 text-white whitespace-nowrap shadow-md';
-                    if (mobBtn) mobBtn.className = 'flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-[10px] font-bold text-indigo-700 bg-indigo-100 shadow-sm w-1/4';
+                    if(btn) btn.className = 'view-tab flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold bg-indigo-600 text-white whitespace-nowrap shadow-xs';
+                    if(mobBtn) mobBtn.className = 'flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-[10px] font-bold text-indigo-700 bg-indigo-50 shadow-2xs w-1/4';
                 } else {
-                    if (btn) btn.className = 'view-tab flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold text-notion-muted hover:bg-notion-sidebar whitespace-nowrap';
-                    if (mobBtn) mobBtn.className = 'flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-[10px] font-bold text-notion-muted w-1/4';
+                    if(btn) btn.className = 'view-tab flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold text-notion-muted hover:bg-notion-sidebar whitespace-nowrap';
+                    if(mobBtn) mobBtn.className = 'flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-[10px] font-bold text-notion-muted w-1/4';
                 }
             });
         }
 
         function renderMoveBanner() {
             const banner = document.getElementById('mobileMoveBanner');
-            if (state.movingReservationId) banner.classList.remove('hidden');
-            else banner.classList.add('hidden');
+            if (banner) {
+                if (state.movingReservationId) banner.classList.remove('hidden');
+                else banner.classList.add('hidden');
+            }
         }
 
         window.startTileMoveMode = function(id, e) {
-            if (e) e.stopPropagation();
+            if(e) e.stopPropagation();
             state.movingReservationId = id;
             renderAll();
-            showToast('移動先の枠をタップしてください', 'info');
+            showToast('移動先の空き枠をタップしてください', 'info');
         };
         window.triggerMoveFromModal = function() {
             const id = document.getElementById('resFormId').value;
@@ -771,37 +1029,23 @@
             const dragRes = state.reservations.find(r => r.id === dragId);
             if (!dragRes) return;
             const destRoomId = targetR && targetR !== 'null' ? targetR : dragRes.roomId;
-            const existRes = findReservation(destRoomId, targetD, targetP);
             
-            const curStartSlot = dragRes.startSlot || dragRes.startPeriodId || dragRes.periodId;
-            const curEndSlot = dragRes.endSlot || dragRes.endPeriodId || curStartSlot;
-            const curStartIdx = TIME_PERIODS.findIndex(p => p.id === curStartSlot);
-            const curEndIdx = TIME_PERIODS.findIndex(p => p.id === curEndSlot);
-            const duration = Math.max(0, curEndIdx - curStartIdx);
+            const origStartIdx = TIME_PERIODS.findIndex(p => p.id === (dragRes.startPeriodId || dragRes.periodId));
+            const origEndIdx = TIME_PERIODS.findIndex(p => p.id === (dragRes.endPeriodId || dragRes.periodId));
+            const span = (origStartIdx !== -1 && origEndIdx !== -1) ? (origEndIdx - origStartIdx) : 0;
             
             const targetStartIdx = TIME_PERIODS.findIndex(p => p.id === targetP);
-            const targetEndIdx = Math.min(TIME_PERIODS.length - 1, targetStartIdx + duration);
+            if (targetStartIdx === -1) return;
+            const targetEndIdx = Math.min(TIME_PERIODS.length - 1, targetStartIdx + span);
+            const targetEndP = TIME_PERIODS[targetEndIdx].id;
 
-            const newStartSlot = TIME_PERIODS[targetStartIdx].id;
-            const newEndSlot = TIME_PERIODS[targetEndIdx].id;
-
-            if (existRes && existRes.id !== dragId) {
-                set(ref(database, 'reservations/' + existRes.id), {
-                    ...existRes,
-                    roomId: dragRes.roomId,
-                    date: dragRes.date,
-                    startSlot: curStartSlot,
-                    endSlot: curEndSlot,
-                    periodId: curStartSlot
-                });
-            }
             set(ref(database, 'reservations/' + dragId), {
                 ...dragRes,
                 roomId: destRoomId,
                 date: targetD,
-                startSlot: newStartSlot,
-                endSlot: newEndSlot,
-                periodId: newStartSlot
+                periodId: targetP,
+                startPeriodId: targetP,
+                endPeriodId: targetEndP
             });
 
             state.movingReservationId = null;
@@ -812,10 +1056,10 @@
             e.dataTransfer.setData('text/plain', id);
             e.dataTransfer.effectAllowed = 'move';
             state.draggedReservationId = id;
-            setTimeout(() => e.target.classList.add('opacity-50', 'scale-95'), 0);
+            setTimeout(() => e.target.classList.add('opacity-40', 'scale-95'), 0);
         };
         window.handleDragEnd = function(e) {
-            e.target.classList.remove('opacity-50', 'scale-95');
+            e.target.classList.remove('opacity-40', 'scale-95');
             state.draggedReservationId = null;
             document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
         };
@@ -840,18 +1084,18 @@
             }
         };
 
-        // 1. Matrix View (当日一覧 - 12コマ)
+        // VIEW: 当日一覧 (Matrix)
         function renderMatrixView() {
             const dateH = document.getElementById('matrixDateHeading');
             if (dateH) dateH.textContent = formatJapaneseDateLabel(state.selectedDate);
 
-            let html = `<div class="matrix-grid border-b border-notion-border bg-notion-sidebar sticky top-0 z-20 shadow-xs">
-                <div class="bg-notion-sidebar border-r border-notion-border p-2 sticky left-0 z-30"></div>`;
+            let html = `<div class="matrix-grid border-b border-notion-border bg-notion-sidebar sticky top-0 z-20">
+                <div class="bg-notion-sidebar border-r border-notion-border p-1 flex items-center justify-center font-bold text-[10px] text-notion-muted">教室</div>`;
             TIME_PERIODS.forEach(p => {
                 const info = getPeriodDisplayInfo(p, state.selectedDate);
-                html += `<div class="px-1 py-2 sm:px-2 sm:py-3 text-center border-r border-notion-border ${p.isFreeSlot ? 'bg-indigo-50/50' : ''}">
-                    <div class="text-[11px] sm:text-xs font-bold text-notion-text leading-tight truncate">${escapeHTML(info.short)}</div>
-                    <div class="text-[9px] text-notion-muted hidden sm:block">${escapeHTML(info.time.split(' ')[0])}</div>
+                html += `<div class="p-1 text-center border-r border-notion-border flex flex-col justify-center items-center ${p.isFreeSlot ? 'bg-indigo-50/40' : ''}">
+                    <div class="text-[10px] font-bold text-notion-text leading-tight truncate w-full">${escapeHTML(info.short)}</div>
+                    <div class="text-[8px] text-notion-muted leading-none mt-0.5 hidden sm:block">${escapeHTML(info.time.split(' ')[0])}</div>
                 </div>`;
             });
             html += `</div>`;
@@ -860,12 +1104,12 @@
                 const theme = ROOM_COLOR_MAP[room.color] || ROOM_COLOR_MAP.indigo;
                 const shortRoomName = formatShortRoomName(room.name);
 
-                html += `<div class="matrix-grid border-b border-notion-border hover:bg-notion-bg/50">
-                    <div class="bg-white border-r border-notion-border p-1 sm:p-2 flex flex-col items-center justify-center cursor-pointer sticky left-0 z-10 shadow-2xs">
-                        <span class="w-7 h-7 sm:w-10 sm:h-10 rounded-lg ${theme.badgeBg} ${theme.badgeText} flex items-center justify-center mb-1">
-                            <i class="ph-bold ${room.icon} text-base sm:text-xl"></i>
+                html += `<div class="matrix-grid border-b border-notion-border hover:bg-notion-bg/40 min-h-[54px]">
+                    <div class="bg-white border-r border-notion-border p-1 flex flex-col items-center justify-center">
+                        <span class="w-6 h-6 rounded-md ${theme.badgeBg} ${theme.badgeText} flex items-center justify-center mb-0.5">
+                            <i class="ph-bold ${room.icon} text-xs"></i>
                         </span>
-                        <span class="font-bold text-[10px] sm:text-sm text-notion-text tracking-tighter leading-none">${escapeHTML(shortRoomName)}</span>
+                        <span class="font-bold text-[10px] text-notion-text tracking-tighter leading-tight text-center">${escapeHTML(shortRoomName)}</span>
                     </div>`;
                 
                 TIME_PERIODS.forEach(p => {
@@ -874,112 +1118,90 @@
                 });
                 html += `</div>`;
             });
-            document.getElementById('matrixGridContainer').innerHTML = html;
+            const container = document.getElementById('matrixGridContainer');
+            if (container) container.innerHTML = html;
         }
 
-        // 2. Weekly View (週間表示 - 12コマ)
+        // VIEW: 週間表示 (Weekly)
         function renderWeeklyView() {
             const weekDays = Array.from({length: 7}, (_, i) => addDaysISO(state.selectedDate, i));
-            const startD = parseDateISO(weekDays[0]);
-            const endD = parseDateISO(weekDays[6]);
-            document.getElementById('weeklyRangeLabel').textContent = `${startD.getMonth()+1}/${startD.getDate()} 〜 ${endD.getMonth()+1}/${endD.getDate()}`;
             
-            let html = `<div class="weekly-grid-row border-b border-notion-border bg-notion-sidebar sticky top-0 z-20 shadow-xs font-bold text-notion-muted text-xs select-none">
-                <div class="p-2 border-r border-notion-border text-center flex items-center justify-center bg-notion-sidebar sticky left-0 z-30 shadow-2xs">日付</div>`;
-            
+            let html = `<div class="weekly-grid-row border-b border-notion-border bg-notion-sidebar sticky top-0 z-20">
+                <div class="bg-notion-sidebar border-r border-notion-border p-1 flex items-center justify-center font-bold text-[10px] text-notion-muted">日付</div>`;
             TIME_PERIODS.forEach(p => {
                 const info = getPeriodDisplayInfo(p, state.selectedDate);
-                html += `<div class="p-2 text-center border-r border-notion-border flex flex-col justify-center items-center bg-notion-sidebar">
-                    <div class="font-bold text-notion-text text-[11px] sm:text-xs leading-tight truncate">${escapeHTML(info.short)}</div>
-                    <div class="text-[9px] text-slate-400 font-normal mt-0.5">${escapeHTML(info.time.split(' ')[0])}</div>
+                html += `<div class="p-1 text-center border-r border-notion-border flex flex-col justify-center items-center ${p.isFreeSlot ? 'bg-indigo-50/40' : ''}">
+                    <div class="text-[10px] font-bold text-notion-text leading-tight truncate w-full">${escapeHTML(info.short)}</div>
+                    <div class="text-[8px] text-notion-muted leading-none mt-0.5 hidden sm:block">${escapeHTML(info.time.split(' ')[0])}</div>
                 </div>`;
             });
             html += `</div>`;
 
             weekDays.forEach(d => {
                 const dt = parseDateISO(d);
-                const isSel = d === state.selectedDate;
-                const isToday = d === state.todayISO;
+                const isSel = (d === state.selectedDate);
+                const isWeekend = (dt.getDay() === 0 || dt.getDay() === 6);
                 const mode = getDayScheduleMode(d);
-                const dayOfWeek = dt.getDay();
-                const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
-
                 const dayReservations = state.reservations.filter(r => r.date === d);
-                const hasReservations = dayReservations.length > 0;
-                
-                let rowHeightClass = 'min-h-[105px] bg-white';
-                let isCompactRow = false;
+                const hasAnyRes = dayReservations.length > 0;
 
-                if (!hasReservations) {
-                    if (isWeekend) {
-                        rowHeightClass = 'min-h-[38px] bg-slate-50/70 opacity-75';
-                        isCompactRow = true;
-                    } else {
-                        rowHeightClass = 'min-h-[56px] bg-white';
-                        isCompactRow = true;
-                    }
-                }
+                const rowMinHeight = (!hasAnyRes && isWeekend) ? 'min-h-[38px]' : (!hasAnyRes ? 'min-h-[50px]' : 'min-h-[78px]');
 
-                html += `<div class="weekly-grid-row border-b border-notion-border transition-all ${rowHeightClass}">
-                    <div onclick="window.handleDateInput('${d}')" class="p-1 sm:p-2 border-r border-notion-border flex flex-col justify-center items-center text-center cursor-pointer transition select-none sticky left-0 z-10 shadow-2xs ${isSel ? 'bg-indigo-600 text-white' : (isToday ? 'bg-indigo-50 text-indigo-700' : (isWeekend ? 'bg-slate-100/90 text-slate-500' : 'bg-notion-sidebar hover:bg-notion-hover text-notion-text'))}">
-                        <div class="flex items-center gap-1">
-                            <span class="font-bold text-xs sm:text-sm tracking-tight">${dt.getMonth()+1}/${dt.getDate()}</span>
-                            <span class="font-bold text-[11px] sm:text-xs">(${DAY_NAMES[dayOfWeek]})</span>
-                        </div>
-                        ${isCompactRow && isWeekend ? `<span class="text-[9px] opacity-70">予約なし</span>` : ''}
-                        ${mode === '5period' && !isCompactRow ? `<span class="mt-0.5 text-[9px] font-bold px-1 rounded ${isSel ? 'bg-white text-indigo-700' : 'bg-amber-100 text-amber-800'}">5校時</span>` : ''}
+                html += `<div class="weekly-grid-row border-b border-notion-border bg-white ${rowMinHeight} transition-all">
+                    <div onclick="window.handleDateInput('${d}')" class="p-1 border-r border-notion-border flex flex-col justify-center items-center text-center cursor-pointer transition select-none ${isSel ? 'bg-indigo-600 text-white' : (isWeekend ? 'bg-slate-50 hover:bg-slate-100 text-notion-muted' : 'bg-notion-sidebar hover:bg-notion-hover text-notion-text')}">
+                        <span class="font-bold text-[10px] leading-none">${dt.getMonth()+1}/${dt.getDate()}</span>
+                        <span class="font-bold text-[9px] leading-tight mt-0.5">(${DAY_NAMES[dt.getDay()]})</span>
                     </div>`;
                 
                 TIME_PERIODS.forEach(p => {
                     const cellRes = state.reservations.filter(r => r.date === d && isReservationInPeriod(r, p.id));
+                    
+                    // 教室の表示順序（state.rooms）に従って一貫ソート
+                    cellRes.sort((a, b) => {
+                        const idxA = state.rooms.findIndex(rm => rm.id === a.roomId);
+                        const idxB = state.rooms.findIndex(rm => rm.id === b.roomId);
+                        return (idxA === -1 ? 99 : idxA) - (idxB === -1 ? 99 : idxB);
+                    });
+
                     const is5PeriodAfter = (mode === '5period' && p.id === 'p6');
                     const hasCellRes = cellRes.length > 0;
 
-                    html += `<div class="border-r border-notion-border flex flex-col gap-1 p-1 sm:p-1.5 drop-zone h-full relative justify-center ${is5PeriodAfter ? 'bg-amber-50/20' : ''}" ondragover="window.handleDragOver(event)" ondragenter="window.handleDragEnter(event)" ondragleave="window.handleDragLeave(event)" ondrop="window.handleDrop(event, null, '${d}', '${p.id}')">`;
+                    html += `<div class="border-r border-notion-border flex flex-col gap-1 p-1 drop-zone h-full relative justify-center ${is5PeriodAfter ? 'bg-amber-50/20' : ''}" ondragover="window.handleDragOver(event)" ondragenter="window.handleDragEnter(event)" ondragleave="window.handleDragLeave(event)" ondrop="window.handleDrop(event, null, '${d}', '${p.id}')">`;
                     
-                    if (hasCellRes) {
-                        cellRes.forEach(res => {
-                            const room = getRoomById(res.roomId);
-                            const cat = getCategoryById(res.category);
-                            const isMoving = state.movingReservationId === res.id;
-                            const sSlot = res.startSlot || res.startPeriodId || res.periodId;
-                            const eSlot = res.endSlot || res.endPeriodId || sSlot;
-                            const isMulti = sSlot !== eSlot;
-
-                            html += `<div draggable="true" ondragstart="window.handleDragStart(event, '${res.id}')" ondragend="window.handleDragEnd(event)" onclick="window.handleSlotInteraction('${res.roomId}', '${d}', '${p.id}', '${res.id}')" class="w-full rounded-lg border ${cat.border} bg-white shadow-xs p-1.5 sm:p-2 flex flex-col relative overflow-hidden group cursor-grab active:cursor-grabbing reservation-tile min-w-0 ${isMoving ? 'opacity-40 ring-2 ring-indigo-500' : ''}">
-                                <div class="absolute top-0 left-0 bottom-0 w-1.5 ${cat.dot}"></div>
-                                <div class="pl-2 flex flex-col min-w-0">
-                                    <div class="flex items-center justify-between mb-1 gap-1 min-w-0">
-                                        <span class="text-[9px] sm:text-[10px] font-bold text-indigo-700 bg-indigo-50 px-1 rounded truncate leading-tight">📍 ${escapeHTML(room.name)}</span>
-                                        ${isMulti ? `<span class="text-[8px] font-bold px-1 rounded bg-indigo-100 text-indigo-700 shrink-0">連続</span>` : ''}
-                                    </div>
-                                    <div class="font-bold text-xs sm:text-sm text-notion-text truncate leading-tight">${escapeHTML(res.user)}</div>
-                                    ${res.exactTimeLabel ? `<div class="text-[9px] font-bold text-indigo-600 bg-indigo-50/90 rounded px-1 mt-0.5 truncate w-fit">⏰ ${escapeHTML(res.exactTimeLabel)}</div>` : ''}
-                                </div>
-                            </div>`;
-                        });
-
-                        if (cellRes.length < state.rooms.length && !is5PeriodAfter) {
-                            html += `<button onclick="window.handleSlotInteraction(null, '${d}', '${p.id}', null)" class="w-full mt-auto min-h-[20px] rounded border border-dashed border-emerald-200 bg-emerald-50/20 hover:bg-emerald-100 transition flex items-center justify-center text-emerald-700 opacity-50 hover:opacity-100" title="${p.short}に追加予約">
-                                <i class="ph-bold ph-plus text-xs"></i>
-                            </button>`;
-                        }
-                    } else {
-                        if (is5PeriodAfter) {
-                            html += `<div class="text-[10px] text-amber-700/60 font-bold text-center leading-tight">5限後</div>`;
-                        } else {
-                            html += `<button onclick="window.handleSlotInteraction(null, '${d}', '${p.id}', null)" class="w-full h-full min-h-[28px] flex items-center justify-center text-slate-300 hover:text-emerald-600 hover:bg-emerald-50/50 rounded transition group" title="${p.label} を予約">
-                                <i class="ph-bold ph-plus ${isCompactRow ? 'text-xs' : 'text-sm'} group-hover:scale-125 transition-transform"></i>
-                            </button>`;
-                        }
+                    if (is5PeriodAfter && !hasCellRes) {
+                        html += `<div class="m-auto text-[8px] text-amber-700/70 font-bold text-center leading-tight">5限後<br>放課後</div>`;
                     }
 
+                    cellRes.forEach(res => {
+                        const room = getRoomById(res.roomId);
+                        const cat = getCategoryById(res.category);
+                        const isMoving = state.movingReservationId === res.id;
+                        const isMulti = (res.startPeriodId && res.endPeriodId && res.startPeriodId !== res.endPeriodId);
+
+                        html += `<div draggable="true" ondragstart="window.handleDragStart(event, '${res.id}')" ondragend="window.handleDragEnd(event)" onclick="window.handleSlotInteraction('${res.roomId}', '${d}', '${p.id}', '${res.id}')" class="w-full rounded border ${cat.border} bg-white shadow-2xs p-1 flex flex-col relative overflow-hidden group cursor-grab active:cursor-grabbing reservation-tile min-w-0 ${isMoving ? 'opacity-40 ring-2 ring-indigo-500' : ''}">
+                            <div class="absolute top-0 left-0 bottom-0 w-0.5 ${cat.dot}"></div>
+                            <div class="pl-1 flex flex-col min-w-0">
+                                <div class="flex items-center justify-between gap-0.5 min-w-0 leading-none mb-0.5">
+                                    <span class="text-[9px] font-bold text-indigo-700 bg-indigo-50 px-1 py-0.5 rounded whitespace-nowrap truncate min-w-0">【${formatShortRoomName(room.name)}】</span>
+                                    ${isMulti ? `<span class="text-[8px] font-bold text-slate-500 bg-slate-100 px-0.5 rounded">連</span>` : ''}
+                                </div>
+                                <div class="font-bold text-[10px] text-notion-text truncate leading-tight w-full">${escapeHTML(res.user)}</div>
+                                ${res.customTime ? `<div class="text-[8px] font-bold text-indigo-600 truncate leading-none mt-0.5">⏰${escapeHTML(res.customTime)}</div>` : ''}
+                            </div>
+                        </div>`;
+                    });
+
+                    if (!hasCellRes && !is5PeriodAfter) {
+                        html += `<button onclick="window.handleSlotInteraction(null, '${d}', '${p.id}', null)" class="w-full h-full min-h-[24px] rounded border border-dashed border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/40 transition flex items-center justify-center text-slate-300 hover:text-emerald-600 group" title="予約追加">
+                            <i class="ph-bold ph-plus text-xs group-hover:scale-110 transition"></i>
+                        </button>`;
+                    }
                     html += `</div>`;
                 });
-
                 html += `</div>`;
             });
-            document.getElementById('allRoomsWeeklyGrid').innerHTML = html;
+            const gridEl = document.getElementById('allRoomsWeeklyGrid');
+            if (gridEl) gridEl.innerHTML = html;
         }
 
         function renderSlotTileHTML(room, dateStr, period, res) {
@@ -988,38 +1210,32 @@
 
             if (!res) {
                 return `<div class="p-1 border-r border-notion-border flex drop-zone h-full min-w-0" ${dropAttrs}>
-                    <button onclick="window.handleSlotInteraction('${room.id}', '${dateStr}', '${period.id}', null)" class="w-full h-full min-h-[65px] sm:min-h-[85px] rounded-md border border-dashed border-emerald-200 bg-emerald-50/20 hover:bg-emerald-50 transition flex flex-col items-center justify-center group ${isMovingTarget ? 'move-target-pulse bg-indigo-50 border-indigo-300' : ''}">
-                        <span class="text-[10px] sm:text-xs font-bold text-emerald-700 group-hover:scale-110 transition flex items-center gap-1">
-                            <i class="ph-bold ${isMovingTarget ? 'ph-arrow-elbow-down-right' : 'ph-plus'} text-xs sm:text-sm"></i><span class="hidden sm:inline">${isMovingTarget ? '移動' : '空き'}</span>
+                    <button onclick="window.handleSlotInteraction('${room.id}', '${dateStr}', '${period.id}', null)" class="w-full h-full min-h-[46px] rounded border border-dashed border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/30 transition flex flex-col items-center justify-center group ${isMovingTarget ? 'move-target-pulse bg-indigo-50 border-indigo-300' : ''}">
+                        <span class="text-[9px] font-bold text-slate-400 group-hover:text-emerald-700 flex items-center gap-0.5">
+                            <i class="ph-bold ${isMovingTarget ? 'ph-arrow-elbow-down-right text-indigo-600' : 'ph-plus'} text-xs"></i>
+                            <span class="hidden sm:inline">${isMovingTarget ? '移動' : '空き'}</span>
                         </span>
                     </button>
                 </div>`;
             }
             
             const cat = getCategoryById(res.category);
-            const isMoving = state.movingReservationId === res.id;
-            const sSlot = res.startSlot || res.startPeriodId || res.periodId;
-            const eSlot = res.endSlot || res.endPeriodId || sSlot;
-            const isMulti = sSlot !== eSlot;
+            const isMoving = (state.movingReservationId === res.id);
 
             return `<div class="p-1 border-r border-notion-border flex drop-zone h-full min-w-0" ${dropAttrs}>
-                <div draggable="true" ondragstart="window.handleDragStart(event, '${res.id}')" ondragend="window.handleDragEnd(event)" onclick="window.handleSlotInteraction('${room.id}', '${dateStr}', '${period.id}', '${res.id}')" class="w-full h-full min-h-[65px] sm:min-h-[85px] rounded-md border ${cat.border} bg-white shadow-2xs p-1.5 flex flex-col relative overflow-hidden group cursor-grab active:cursor-grabbing reservation-tile min-w-0 ${isMoving ? 'opacity-40 ring-2 ring-indigo-500' : ''} ${isMovingTarget && !isMoving ? 'move-target-pulse' : ''}">
+                <div draggable="true" ondragstart="window.handleDragStart(event, '${res.id}')" ondragend="window.handleDragEnd(event)" onclick="window.handleSlotInteraction('${room.id}', '${dateStr}', '${period.id}', '${res.id}')" class="w-full h-full min-h-[46px] rounded border ${cat.border} bg-white shadow-2xs p-1 flex flex-col relative overflow-hidden group cursor-grab active:cursor-grabbing reservation-tile min-w-0 ${isMoving ? 'opacity-40 ring-2 ring-indigo-500' : ''}">
                     <div class="absolute top-0 left-0 right-0 h-1 ${cat.dot}"></div>
-                    <div class="flex items-center justify-between w-full mt-0.5 mb-0.5">
-                        <span class="text-[9px] font-bold ${cat.text} bg-white/90 px-1 py-0.2 rounded leading-tight truncate">${cat.label}</span>
-                        ${isMulti ? `<span class="text-[8px] font-bold px-1 rounded bg-indigo-100 text-indigo-700">連続</span>` : ''}
-                    </div>
-                    <div class="font-bold text-[10px] sm:text-xs text-notion-text truncate leading-tight w-full">${escapeHTML(res.user)}</div>
-                    ${res.exactTimeLabel ? `<div class="text-[8px] sm:text-[9px] font-bold text-indigo-600 bg-indigo-50 rounded px-1 mt-0.5 truncate">⏰ ${escapeHTML(res.exactTimeLabel)}</div>` : ''}
-                    ${res.title ? `<div class="text-[9px] text-notion-muted truncate leading-tight mt-0.5 w-full">${escapeHTML(res.title)}</div>` : ''}
-                    <button type="button" onclick="window.startTileMoveMode('${res.id}', event)" class="absolute bottom-1 right-1 p-1 rounded bg-notion-sidebar text-notion-muted hover:text-indigo-600 transition shadow-2xs z-10" title="移動">
-                        <i class="ph-bold ph-arrows-out-cardinal text-[10px]"></i>
+                    <span class="text-[8px] font-bold ${cat.text} bg-white/90 px-1 py-0.5 rounded w-fit mb-0.5 leading-tight shrink-0 mt-0.5 truncate max-w-full">${cat.label}</span>
+                    <div class="font-bold text-[10px] text-notion-text truncate leading-tight w-full">${escapeHTML(res.user)}</div>
+                    ${res.customTime ? `<div class="text-[8px] font-bold text-indigo-600 leading-none mt-0.5 truncate">⏰${escapeHTML(res.customTime)}</div>` : ''}
+                    <button type="button" onclick="window.startTileMoveMode('${res.id}', event)" class="absolute bottom-0.5 right-0.5 p-0.5 rounded text-slate-300 hover:text-indigo-600 transition" title="移動">
+                        <i class="ph-bold ph-arrows-out-cardinal text-xs"></i>
                     </button>
                 </div>
             </div>`;
         }
 
-        // 3. Calendar View
+        // VIEW: カレンダー (Calendar)
         window.changeCalendarMonth = function(delta) {
             let m = state.calendarMonth + delta; let y = state.calendarYear;
             if (m > 11) { m = 0; y++; } else if (m < 0) { m = 11; y--; }
@@ -1046,9 +1262,9 @@
                 const isSel = isoStr === state.selectedDate;
                 const dayRes = state.reservations.filter(r => r.date === isoStr);
                 
-                html += `<div onclick="window.handleCalendarDayClick('${isoStr}')" class="p-1.5 sm:p-3 flex flex-col items-center justify-start rounded-xl border border-notion-border cursor-pointer transition ${isSel ? 'ring-2 ring-indigo-500 bg-indigo-50' : 'hover:bg-notion-hover bg-white'}">
-                    <span class="text-xs sm:text-base font-bold ${isToday ? 'bg-indigo-600 text-white w-5 h-5 sm:w-7 sm:h-7 flex items-center justify-center rounded-full' : 'text-notion-text'}">${d}</span>
-                    ${dayRes.length > 0 ? `<div class="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-1 mx-auto"></div>` : ''}
+                html += `<div onclick="window.handleCalendarDayClick('${isoStr}')" class="p-1.5 sm:p-2.5 flex flex-col items-center justify-start rounded-xl border border-notion-border cursor-pointer transition ${isSel ? 'ring-2 ring-indigo-500 bg-indigo-50' : 'hover:bg-notion-hover bg-white'}">
+                    <span class="text-xs font-bold ${isToday ? 'bg-indigo-600 text-white w-5 h-5 flex items-center justify-center rounded-full' : 'text-notion-text'}">${d}</span>
+                    ${dayRes.length > 0 ? `<div class="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-1 mx-auto shadow-2xs"></div>` : ''}
                     <span class="text-[9px] font-bold text-notion-muted mt-0.5">${dayRes.length > 0 ? dayRes.length + '件' : '&nbsp;'}</span>
                 </div>`;
             }
@@ -1061,20 +1277,17 @@
             if (!c) return;
             const dayRes = state.reservations.filter(r => r.date === state.selectedDate);
             const dt = parseDateISO(state.selectedDate);
-            let html = `<h4 class="font-bold text-sm sm:text-base mb-3 flex items-center gap-2"><i class="ph-bold ph-calendar-check text-indigo-600 text-lg"></i>${dt.getMonth()+1}月${dt.getDate()}日 の予約</h4>`;
+            let html = `<h4 class="font-bold text-xs sm:text-sm mb-2.5 flex items-center gap-1.5"><i class="ph-bold ph-calendar-check text-indigo-600 text-base"></i>${dt.getMonth()+1}月${dt.getDate()}日 の予約</h4>`;
             if (dayRes.length === 0) {
-                html += `<p class="text-notion-muted text-xs font-bold bg-notion-sidebar p-3 rounded-xl">予約はありません。</p>`;
+                html += `<p class="text-notion-muted text-xs font-bold bg-notion-sidebar p-2.5 rounded-xl">予約はありません。</p>`;
             } else {
                 html += `<div class="grid grid-cols-2 sm:grid-cols-4 gap-2">`;
                 dayRes.forEach(r => {
-                    const room = getRoomById(r.roomId);
-                    const sSlot = r.startSlot || r.startPeriodId || r.periodId;
-                    const period = getPeriodById(sSlot);
-                    const cat = getCategoryById(r.category);
-                    html += `<div class="p-2.5 rounded-xl border border-notion-border flex flex-col gap-1 bg-white shadow-2xs cursor-pointer hover:bg-notion-hover" onclick="window.switchView('matrix')">
-                        <div class="flex items-center justify-between">
-                            <span class="text-[9px] font-bold px-1 py-0.2 rounded ${cat.bg} ${cat.text}">${cat.label}</span>
-                            <span class="text-[10px] font-bold text-notion-muted">${period.short}</span>
+                    const room = getRoomById(r.roomId), period = getPeriodById(r.startPeriodId || r.periodId), cat = getCategoryById(r.category);
+                    html += `<div class="p-2 rounded-xl border border-notion-border flex flex-col gap-1 bg-white shadow-2xs cursor-pointer hover:bg-notion-hover" onclick="window.switchView('matrix')">
+                        <div class="flex items-center justify-between mb-0.5">
+                            <span class="text-[9px] font-bold px-1.5 py-0.5 rounded ${cat.bg} ${cat.text}">${cat.label}</span>
+                            <span class="text-[9px] font-bold text-notion-muted">${period.short}</span>
                         </div>
                         <div class="font-bold text-xs text-notion-text truncate"><i class="ph-bold ${room.icon} mr-1 text-indigo-600"></i>${escapeHTML(room.name)}</div>
                         <div class="text-[10px] font-bold text-notion-text truncate">${escapeHTML(r.user)}</div>
@@ -1085,104 +1298,85 @@
             c.innerHTML = html;
         }
 
-        // 🌟 モード切替（①コマ選択 / ②時間直接指定） 🌟
-        window.setTimeMode = function(mode) {
-            state.timeInputMode = mode;
-            const btnSlot = document.getElementById('modeBtnSlot');
-            const btnExact = document.getElementById('modeBtnExact');
-            const contSlot = document.getElementById('containerSlotMode');
-            const contExact = document.getElementById('containerExactMode');
-
-            if (mode === 'slot') {
-                btnSlot.className = 'py-1.5 text-xs font-bold rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-2xs flex items-center justify-center gap-1';
-                btnExact.className = 'py-1.5 text-xs font-bold rounded-md text-notion-muted hover:bg-notion-sidebar flex items-center justify-center gap-1';
-                contSlot.classList.remove('hidden');
-                contExact.classList.add('hidden');
+        window.setTimeInputMode = function(mode) {
+            const isPeriod = (mode === 'period');
+            document.getElementById('timeModePeriodSection').classList.toggle('hidden', !isPeriod);
+            document.getElementById('timeModeCustomSection').classList.toggle('hidden', isPeriod);
+            
+            const btnP = document.getElementById('btnModePeriod');
+            const btnC = document.getElementById('btnModeCustom');
+            if (isPeriod) {
+                btnP.className = 'px-2 py-0.5 rounded-md font-bold bg-indigo-600 text-white shadow-2xs';
+                btnC.className = 'px-2 py-0.5 rounded-md font-bold text-notion-muted hover:bg-white';
             } else {
-                btnExact.className = 'py-1.5 text-xs font-bold rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-2xs flex items-center justify-center gap-1';
-                btnSlot.className = 'py-1.5 text-xs font-bold rounded-md text-notion-muted hover:bg-notion-sidebar flex items-center justify-center gap-1';
-                contExact.classList.remove('hidden');
-                contSlot.classList.add('hidden');
+                btnP.className = 'px-2 py-0.5 rounded-md font-bold text-notion-muted hover:bg-white';
+                btnC.className = 'px-2 py-0.5 rounded-md font-bold bg-indigo-600 text-white shadow-2xs';
             }
-            window.checkFormConflictWarning();
         };
 
-        // 時・分プルダウンの初期設定
-        function initExactTimeSelects() {
-            const hStart = document.getElementById('resFormStartHour');
-            const hEnd = document.getElementById('resFormEndHour');
-            const mStart = document.getElementById('resFormStartMin');
-            const mEnd = document.getElementById('resFormEndMin');
+        function populateHourMinuteSelects() {
+            const sh = document.getElementById('customStartHour');
+            const sm = document.getElementById('customStartMin');
+            const eh = document.getElementById('customEndHour');
+            const em = document.getElementById('customEndMin');
 
-            let hourOpts = '';
-            for (let h = 7; h <= 20; h++) {
-                const hStr = String(h).padStart(2, '0');
-                hourOpts += `<option value="${h}">${hStr}</option>`;
+            let hoursHTML = '';
+            for (let h = 7; h <= 19; h++) {
+                const hh = String(h).padStart(2, '0');
+                hoursHTML += `<option value="${hh}">${hh}時</option>`;
             }
-            hStart.innerHTML = hourOpts;
-            hEnd.innerHTML = hourOpts;
+            sh.innerHTML = hoursHTML;
+            eh.innerHTML = hoursHTML;
 
-            let minOpts = '';
+            let minsHTML = '';
             for (let m = 0; m < 60; m += 5) {
-                const mStr = String(m).padStart(2, '0');
-                minOpts += `<option value="${m}">${mStr}</option>`;
+                const mm = String(m).padStart(2, '0');
+                minsHTML += `<option value="${mm}">${mm}分</option>`;
             }
-            mStart.innerHTML = minOpts;
-            mEnd.innerHTML = minOpts;
+            sm.innerHTML = minsHTML;
+            em.innerHTML = minsHTML;
         }
 
-        // 時刻プルダウン変更時
-        window.handleExactTimeChange = function() {
-            const sH = parseInt(document.getElementById('resFormStartHour').value, 10);
-            const sM = parseInt(document.getElementById('resFormStartMin').value, 10);
-            const eH = parseInt(document.getElementById('resFormEndHour').value, 10);
-            const eM = parseInt(document.getElementById('resFormEndMin').value, 10);
-            const startTotal = sH * 60 + sM;
-            const endTotal = eH * 60 + eM;
-
-            if (endTotal <= startTotal) {
-                // 自動で1時間後に設定
-                const newEndH = Math.min(20, sH + 1);
-                document.getElementById('resFormEndHour').value = newEndH;
-                document.getElementById('resFormEndMin').value = sM;
-            }
-            window.checkFormConflictWarning();
-        };
-
-        // 🌟 プルダウン：開始は「開始時刻のみ」、終了は「終了時刻のみ」を反映 🌟
-        function populatePeriodOptions(dateStr, selStartId, selEndId) {
-            const startSel = document.getElementById('resFormStartSlot');
-            const endSel = document.getElementById('resFormEndSlot');
-
-            const startOptionsHTML = TIME_PERIODS.map(p => {
+        function populatePeriodOptions(dateStr, startSelId, endSelId) {
+            const startSel = document.getElementById('resFormStartPeriod');
+            const endSel = document.getElementById('resFormEndPeriod');
+            
+            startSel.innerHTML = TIME_PERIODS.map(p => {
                 const info = getPeriodDisplayInfo(p, dateStr);
-                return `<option value="${p.id}">${escapeHTML(info.label)}（${escapeHTML(p.startOnly)}）</option>`;
+                const startTime = (p.defaultStart || info.time.split(' ')[0] || '');
+                return `<option value="${p.id}">${escapeHTML(info.label)}（${startTime}〜）</option>`;
             }).join('');
 
-            const endOptionsHTML = TIME_PERIODS.map(p => {
+            endSel.innerHTML = TIME_PERIODS.map(p => {
                 const info = getPeriodDisplayInfo(p, dateStr);
-                return `<option value="${p.id}">${escapeHTML(info.label)}（${escapeHTML(p.endOnly)}）</option>`;
+                const parts = info.time.split(' ');
+                const endTime = (p.defaultEnd || parts[parts.length - 1] || '');
+                return `<option value="${p.id}">${escapeHTML(info.label)}（〜${endTime}）</option>`;
             }).join('');
 
-            startSel.innerHTML = startOptionsHTML;
-            endSel.innerHTML = endOptionsHTML;
-
-            if (selStartId) startSel.value = selStartId;
-            if (selEndId) endSel.value = selEndId;
+            if(startSelId) startSel.value = startSelId;
+            if(endSelId) endSel.value = endSelId;
+            else if(startSelId) endSel.value = startSelId;
         }
 
         window.handleModalDateOrPeriodChange = function() {
-            const dateVal = document.getElementById('resFormDate').value;
-            const startVal = document.getElementById('resFormStartSlot').value;
-            const endVal = document.getElementById('resFormEndSlot').value;
-            populatePeriodOptions(dateVal, startVal, endVal);
+            const dateStr = document.getElementById('resFormDate').value;
+            const startVal = document.getElementById('resFormStartPeriod').value;
+            const endVal = document.getElementById('resFormEndPeriod').value;
+            
+            const startIdx = TIME_PERIODS.findIndex(p => p.id === startVal);
+            const endIdx = TIME_PERIODS.findIndex(p => p.id === endVal);
+            
+            if (endIdx < startIdx) {
+                document.getElementById('resFormEndPeriod').value = startVal;
+            }
             window.checkFormConflictWarning();
         };
 
         window.setCategory = function(id) { state.selectedCategory = id; renderCategoryGroup(); };
         function renderCategoryGroup() {
             document.getElementById('resFormCategoryGroup').innerHTML = CATEGORIES.map(c => `
-                <button type="button" onclick="window.setCategory('${c.id}')" class="py-1.5 px-1 rounded-lg border text-[10px] sm:text-xs font-bold flex flex-col items-center justify-center gap-1 transition-all ${state.selectedCategory===c.id ? `${c.bg} ${c.border} ${c.text} ring-2 ring-indigo-500 shadow-sm scale-105` : 'bg-white border-notion-border text-notion-muted hover:bg-notion-hover'}">
+                <button type="button" onclick="window.setCategory('${c.id}')" class="py-1.5 px-1 rounded-lg border text-[10px] font-bold flex flex-col items-center justify-center gap-0.5 transition-all ${state.selectedCategory===c.id ? `${c.bg} ${c.border} ${c.text} ring-2 ring-indigo-500 shadow-2xs scale-105` : 'bg-white border-notion-border text-notion-muted hover:bg-notion-hover'}">
                     <span class="w-2 h-2 rounded-full ${c.dot}"></span>${c.label}
                 </button>
             `).join('');
@@ -1192,56 +1386,52 @@
             const m = document.getElementById('reservationModal');
             document.getElementById('resFormRoom').innerHTML = state.rooms.map(r => `<option value="${r.id}">${escapeHTML(r.name)}</option>`).join('');
             
-            hideDeleteConfirm();
+            populateHourMinuteSelects();
 
-            const res = opt.reservationId ? state.reservations.find(r => r.id === opt.reservationId) : null;
+            const res = opt.reservationId ? state.reservations.find(r=>r.id===opt.reservationId) : null;
             const targetDate = res ? res.date : (opt.date || state.selectedDate);
-            const defaultSlot = opt.periodId || 'p1';
-
-            const startSlot = res ? (res.startSlot || res.startPeriodId || res.periodId) : defaultSlot;
-            const endSlot = res ? (res.endSlot || res.endPeriodId || res.startSlot || res.periodId) : defaultSlot;
-
-            populatePeriodOptions(targetDate, startSlot, endSlot);
-            initExactTimeSelects();
-
-            // 時刻指定モードの初期化
-            if (res && res.exactTime) {
-                window.setTimeMode('exact');
-                document.getElementById('resFormStartHour').value = res.exactTime.startH;
-                document.getElementById('resFormStartMin').value = res.exactTime.startM;
-                document.getElementById('resFormEndHour').value = res.exactTime.endH;
-                document.getElementById('resFormEndMin').value = res.exactTime.endM;
-            } else {
-                window.setTimeMode('slot');
-                const pObj = getPeriodById(startSlot);
-                const sH = Math.floor(pObj.startMin / 60);
-                const sM = pObj.startMin % 60;
-                const eH = Math.floor(pObj.endMin / 60);
-                const eM = pObj.endMin % 60;
-                document.getElementById('resFormStartHour').value = sH;
-                document.getElementById('resFormStartMin').value = sM - (sM % 5);
-                document.getElementById('resFormEndHour').value = eH;
-                document.getElementById('resFormEndMin').value = eM - (eM % 5);
-            }
+            
+            const startP = res ? (res.startPeriodId || res.periodId) : (opt.periodId || 'p1');
+            const endP = res ? (res.endPeriodId || res.periodId) : (opt.periodId || 'p1');
+            
+            populatePeriodOptions(targetDate, startP, endP);
             
             document.getElementById('resFormId').value = res ? res.id : '';
             document.getElementById('resFormRoom').value = res ? res.roomId : (opt.roomId || state.rooms[0].id);
             document.getElementById('resFormDate').value = targetDate;
             state.selectedCategory = res ? res.category : 'class';
             document.getElementById('resFormUser').value = res ? res.user : '';
-            document.getElementById('resFormTitle').value = res ? (res.title || '') : '';
-            document.getElementById('resFormMemo').value = res ? (res.memo || '') : '';
+            document.getElementById('resFormTitle').value = res ? (res.title||'') : '';
+            document.getElementById('resFormMemo').value = res ? (res.memo||'') : '';
             
+            if (res && res.customTime && res.customTime.includes('〜')) {
+                const parts = res.customTime.split('〜');
+                if (parts[0] && parts[0].includes(':')) {
+                    const [h, min] = parts[0].split(':');
+                    document.getElementById('customStartHour').value = h;
+                    document.getElementById('customStartMin').value = min;
+                }
+                if (parts[1] && parts[1].includes(':')) {
+                    const [h, min] = parts[1].split(':');
+                    document.getElementById('customEndHour').value = h;
+                    document.getElementById('customEndMin').value = min;
+                }
+                window.setTimeInputMode('custom');
+            } else {
+                window.setTimeInputMode('period');
+            }
+
             const btnDel = document.getElementById('btnDeleteReservation');
-            const btnMove = document.getElementById('btnStartTouchMove');
-            
+            const inlineConfirm = document.getElementById('inlineDeleteConfirm');
+            inlineConfirm.classList.add('hidden');
+
             if (res) {
                 btnDel.classList.remove('hidden');
-                btnMove.classList.remove('hidden');
+                document.getElementById('btnStartTouchMove').classList.remove('hidden');
                 document.getElementById('btnSubmitReservationText').textContent = '変更を保存';
             } else {
                 btnDel.classList.add('hidden');
-                btnMove.classList.add('hidden');
+                document.getElementById('btnStartTouchMove').classList.add('hidden');
                 document.getElementById('btnSubmitReservationText').textContent = '予約確定';
             }
             
@@ -1256,7 +1446,6 @@
             const m = document.getElementById('reservationModal');
             m.classList.add('hidden'); 
             m.classList.remove('flex'); 
-            hideDeleteConfirm();
         };
         
         window.fillUserPreset = function(txt) {
@@ -1264,74 +1453,32 @@
             inp.value = inp.value ? `${inp.value} ${txt}` : txt;
             window.clearUserValidationError();
         };
-        window.clearUserValidationError = function() { 
-            document.getElementById('resFormUser').classList.remove('border-rose-500'); 
-            document.getElementById('resFormUserError').classList.add('hidden'); 
+        window.clearUserValidationError = function() {
+            document.getElementById('resFormUser').classList.remove('border-rose-500');
+            document.getElementById('resFormUserError').classList.add('hidden');
         };
-
-        // 予約のコマ範囲を判定するヘルパー
-        function getComputedSlotRange() {
-            if (state.timeInputMode === 'exact') {
-                const sH = parseInt(document.getElementById('resFormStartHour').value, 10);
-                const sM = parseInt(document.getElementById('resFormStartMin').value, 10);
-                const eH = parseInt(document.getElementById('resFormEndHour').value, 10);
-                const eM = parseInt(document.getElementById('resFormEndMin').value, 10);
-                const reqStart = sH * 60 + sM;
-                const reqEnd = eH * 60 + eM;
-
-                const covered = TIME_PERIODS.filter(p => !(reqEnd <= p.startMin || reqStart >= p.endMin));
-                if (covered.length === 0) return { startSlot: 'p1', endSlot: 'p1', sIdx: 2, eIdx: 2, exactTimeLabel: `${String(sH).padStart(2,'0')}:${String(sM).padStart(2,'0')}〜${String(eH).padStart(2,'0')}:${String(eM).padStart(2,'0')}` };
-                
-                const startSlot = covered[0].id;
-                const endSlot = covered[covered.length - 1].id;
-                const sIdx = TIME_PERIODS.findIndex(p => p.id === startSlot);
-                const eIdx = TIME_PERIODS.findIndex(p => p.id === endSlot);
-                return {
-                    startSlot,
-                    endSlot,
-                    sIdx,
-                    eIdx,
-                    exactTime: { startH: sH, startM: sM, endH: eH, endM: eM },
-                    exactTimeLabel: `${String(sH).padStart(2,'0')}:${String(sM).padStart(2,'0')}〜${String(eH).padStart(2,'0')}:${String(eM).padStart(2,'0')}`
-                };
-            } else {
-                const startSlot = document.getElementById('resFormStartSlot').value;
-                const endSlot = document.getElementById('resFormEndSlot').value;
-                const sIdx = TIME_PERIODS.findIndex(p => p.id === startSlot);
-                const eIdx = TIME_PERIODS.findIndex(p => p.id === endSlot);
-                return {
-                    startSlot,
-                    endSlot,
-                    sIdx,
-                    eIdx,
-                    exactTime: null,
-                    exactTimeLabel: null
-                };
-            }
-        }
         
         window.checkFormConflictWarning = function() {
-            const r = document.getElementById('resFormRoom').value;
-            const d = document.getElementById('resFormDate').value;
-            const range = getComputedSlotRange();
-            const minIdx = Math.min(range.sIdx, range.eIdx);
-            const maxIdx = Math.max(range.sIdx, range.eIdx);
-            const id = document.getElementById('resFormId').value;
+            const r = document.getElementById('resFormRoom').value, d = document.getElementById('resFormDate').value;
+            const startVal = document.getElementById('resFormStartPeriod').value;
+            const endVal = document.getElementById('resFormEndPeriod').value;
+            const startIdx = TIME_PERIODS.findIndex(p => p.id === startVal);
+            const endIdx = TIME_PERIODS.findIndex(p => p.id === endVal);
 
-            let conflictRes = null;
-            for (let i = minIdx; i <= maxIdx; i++) {
+            let hasConflict = false;
+            for (let i = startIdx; i <= endIdx; i++) {
                 const pId = TIME_PERIODS[i].id;
-                const exist = findReservation(r, d, pId);
-                if (exist && exist.id !== id) {
-                    conflictRes = exist;
+                const exist = state.reservations.find(res => res.roomId === r && res.date === d && isReservationInPeriod(res, pId));
+                if (exist && exist.id !== document.getElementById('resFormId').value) {
+                    hasConflict = true;
                     break;
                 }
             }
 
             const ban = document.getElementById('resFormConflictBanner');
-            if (conflictRes) {
+            if(hasConflict) {
                 ban.classList.remove('hidden'); 
-                document.getElementById('resFormConflictText').innerHTML = `選択範囲に既に予約（${escapeHTML(conflictRes.user)}）が含まれています。`;
+                document.getElementById('resFormConflictText').textContent = '選択したコマ範囲に既に別の予約が存在します。';
             } else {
                 ban.classList.add('hidden');
             }
@@ -1341,44 +1488,60 @@
             e.preventDefault();
             const id = document.getElementById('resFormId').value;
             const user = document.getElementById('resFormUser').value.trim();
-            if (!user) { 
-                document.getElementById('resFormUser').classList.add('border-rose-500'); 
-                document.getElementById('resFormUserError').classList.remove('hidden'); 
-                return; 
+            if(!user) {
+                document.getElementById('resFormUser').classList.add('border-rose-500');
+                document.getElementById('resFormUserError').classList.remove('hidden');
+                return;
             }
             
             const rId = document.getElementById('resFormRoom').value;
             const dStr = document.getElementById('resFormDate').value;
-            const range = getComputedSlotRange();
 
-            if (range.eIdx < range.sIdx) {
-                showToast('終了コマは、開始コマ以降を選択してください', 'error');
-                return;
-            }
-            
-            for (let i = range.sIdx; i <= range.eIdx; i++) {
-                const exist = findReservation(rId, dStr, TIME_PERIODS[i].id);
-                if (exist && exist.id !== id) {
-                    showToast(`選択した範囲（${TIME_PERIODS[i].short}）に既に予約（${exist.user}）があります`, 'error');
-                    return;
+            const isCustomMode = !document.getElementById('timeModeCustomSection').classList.contains('hidden');
+            let startPId = document.getElementById('resFormStartPeriod').value;
+            let endPId = document.getElementById('resFormEndPeriod').value;
+            let customTimeStr = '';
+
+            if (isCustomMode) {
+                const sH = document.getElementById('customStartHour').value;
+                const sM = document.getElementById('customStartMin').value;
+                const eH = document.getElementById('customEndHour').value;
+                const eM = document.getElementById('customEndMin').value;
+                const sTime = `${sH}:${sM}`;
+                const eTime = `${eH}:${eM}`;
+                customTimeStr = `${sTime}〜${eTime}`;
+
+                let matchedStartIdx = -1;
+                let matchedEndIdx = -1;
+                TIME_PERIODS.forEach((p, idx) => {
+                    const pStart = p.defaultStart || '08:00';
+                    const pEnd = p.defaultEnd || '17:00';
+                    if (sTime < pEnd && eTime > pStart) {
+                        if (matchedStartIdx === -1) matchedStartIdx = idx;
+                        matchedEndIdx = idx;
+                    }
+                });
+
+                if (matchedStartIdx !== -1 && matchedEndIdx !== -1) {
+                    startPId = TIME_PERIODS[matchedStartIdx].id;
+                    endPId = TIME_PERIODS[matchedEndIdx].id;
                 }
             }
             
             const resData = {
                 roomId: rId,
                 date: dStr,
-                startSlot: range.startSlot,
-                endSlot: range.endSlot,
-                periodId: range.startSlot,
-                exactTime: range.exactTime || null,
-                exactTimeLabel: range.exactTimeLabel || null,
+                periodId: startPId,
+                startPeriodId: startPId,
+                endPeriodId: endPId,
+                customTime: customTimeStr,
                 user: user,
                 category: state.selectedCategory,
-                title: document.getElementById('resFormTitle').value,
-                memo: document.getElementById('resFormMemo').value
+                title: document.getElementById('resFormTitle').value.trim(),
+                memo: document.getElementById('resFormMemo').value.trim()
             };
 
-            if (id) {
+            if(id) {
                 set(ref(database, 'reservations/' + id), resData);
             } else {
                 push(ref(database, 'reservations'), resData);
@@ -1387,41 +1550,38 @@
             showToast('予約を保存しました');
         };
 
-        function showDeleteConfirm() {
-            document.getElementById('deleteConfirmBar').classList.remove('hidden');
-        }
-        function hideDeleteConfirm() {
-            document.getElementById('deleteConfirmBar').classList.add('hidden');
-        }
-
+        // 確実なインライン削除処理
         const btnDelete = document.getElementById('btnDeleteReservation');
-        const btnCancelDelete = document.getElementById('btnCancelDelete');
-        const btnConfirmDelete = document.getElementById('btnConfirmDelete');
+        const inlineConfirm = document.getElementById('inlineDeleteConfirm');
+        const btnConfirmYes = document.getElementById('btnConfirmDeleteYes');
+        const btnConfirmNo = document.getElementById('btnConfirmDeleteNo');
 
-        btnDelete.addEventListener('click', (e) => { e.preventDefault(); showDeleteConfirm(); });
-        btnCancelDelete.addEventListener('click', (e) => { e.preventDefault(); hideDeleteConfirm(); });
-
-        btnConfirmDelete.addEventListener('click', async (e) => {
-            e.preventDefault();
-            const id = document.getElementById('resFormId').value;
-            if (!id) return;
-
-            try {
-                await remove(ref(database, 'reservations/' + id));
-                state.reservations = state.reservations.filter(r => r.id !== id);
-                window.closeReservationModal();
-                showToast('予約を削除しました');
-                renderAll();
-            } catch (err) {
-                console.error('削除失敗:', err);
-                showToast('削除に失敗しました。通信環境を確認してください。', 'error');
-            }
-        });
+        if (btnDelete) {
+            btnDelete.onclick = () => { inlineConfirm.classList.remove('hidden'); };
+        }
+        if (btnConfirmNo) {
+            btnConfirmNo.onclick = () => { inlineConfirm.classList.add('hidden'); };
+        }
+        if (btnConfirmYes) {
+            btnConfirmYes.onclick = () => {
+                const id = document.getElementById('resFormId').value;
+                if (!id) return;
+                remove(ref(database, 'reservations/' + id))
+                    .then(() => {
+                        window.closeReservationModal();
+                        showToast('予約を削除しました');
+                    })
+                    .catch(() => {
+                        showToast('削除に失敗しました', 'error');
+                    });
+            };
+        }
 
         function showToast(msg, type='success') {
             const c = document.getElementById('toastContainer');
+            if (!c) return;
             const t = document.createElement('div');
-            t.className = `text-white px-4 py-2.5 rounded-xl shadow-lg text-xs sm:text-sm font-bold transition-all ${type==='error'?'bg-rose-600':(type==='info'?'bg-indigo-600':'bg-notion-text')}`;
+            t.className = `text-white px-3.5 py-2 rounded-xl shadow-lg text-xs font-bold transition-all ${type==='error'?'bg-rose-600':(type==='info'?'bg-indigo-600':'bg-notion-text')}`;
             t.textContent = msg;
             c.appendChild(t);
             setTimeout(() => t.remove(), 3000);
