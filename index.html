@@ -83,13 +83,33 @@
         input[type="text"], input[type="time"], input[type="date"], select {
             font-size: 16px !important;
         }
-        .schedule-grid {
+        /* 12コマ対応マトリクス・週間グリッド */
+        .matrix-grid {
             display: grid;
-            grid-template-columns: 80px repeat(9, minmax(110px, 1fr));
+            grid-template-columns: 80px repeat(12, minmax(105px, 1fr));
         }
         @media (min-width: 640px) {
-            .schedule-grid {
-                grid-template-columns: 110px repeat(9, minmax(130px, 1fr));
+            .matrix-grid {
+                grid-template-columns: 110px repeat(12, minmax(120px, 1fr));
+            }
+        }
+        .weekly-grid-row {
+            display: grid;
+            grid-template-columns: 85px repeat(12, minmax(105px, 1fr));
+        }
+        @media (min-width: 640px) {
+            .weekly-grid-row {
+                grid-template-columns: 105px repeat(12, minmax(120px, 1fr));
+            }
+        }
+        .weekly-scroll-container {
+            max-height: calc(100vh - 220px);
+            overflow-y: auto;
+            overflow-x: auto;
+        }
+        @media (max-width: 640px) {
+            .weekly-scroll-container {
+                max-height: calc(100vh - 190px);
             }
         }
     </style>
@@ -99,7 +119,6 @@
     <!-- ヘッダー -->
     <header class="bg-white border-b border-notion-border px-3 py-2 sm:px-6 z-30 sticky top-0 shadow-2xs">
         <div class="max-w-[1900px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-2">
-            <!-- App Brand & Live Date Status -->
             <div class="flex items-center justify-between sm:justify-start gap-3">
                 <div class="flex items-center gap-2 sm:gap-3">
                     <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-indigo-600 text-white flex items-center justify-center shadow-sm shrink-0">
@@ -115,7 +134,6 @@
                         </h1>
                     </div>
                 </div>
-                <!-- スマホ用 クラウドステータス -->
                 <div class="sm:hidden flex items-center gap-1 text-[10px] font-bold text-sky-600 px-2 py-0.5 rounded bg-sky-50 border border-sky-100" id="mobileCloudStatus">
                     <span class="w-1 h-1 rounded-full bg-sky-500 animate-pulse" id="mobileCloudDot"></span>通信中
                 </div>
@@ -144,7 +162,6 @@
                     <button onclick="window.jumpToToday()" id="btnJumpToday" class="px-2 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm font-semibold rounded-md bg-white border border-notion-border hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition shadow-2xs">
                         今日
                     </button>
-                    <!-- 6校時日課 / 5校時日課 切替ボタン -->
                     <button
                         onclick="window.toggleDayScheduleMode()"
                         id="btnDayScheduleMode"
@@ -171,7 +188,7 @@
     </header>
 
     <!-- デスクトップ用 タブナビゲーション -->
-    <div class="bg-white border-b border-notion-border px-4 sm:px-6 py-2 hidden md:block z-20">
+    <div class="bg-white border-b border-notion-border px-4 sm:px-6 py-2 hidden md:block z-20 sticky top-[57px] shadow-2xs">
         <div class="max-w-[1900px] mx-auto flex items-center gap-2">
             <button onclick="window.switchView('weekly')" id="tab-weekly" class="view-tab flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition whitespace-nowrap">
                 <i class="ph-bold ph-calendar-week text-lg"></i><span>週間表示</span>
@@ -202,8 +219,8 @@
 
         <!-- VIEW: Weekly (全教室週間表示) -->
         <section id="view-weekly" class="space-y-4">
-            <div class="bg-white rounded-xl sm:rounded-2xl border border-notion-border p-3 sm:p-6 shadow-2xs flex flex-col">
-                <div class="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-notion-border">
+            <div class="bg-white rounded-xl sm:rounded-2xl border border-notion-border p-3 sm:p-5 shadow-2xs flex flex-col">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-3 pb-3 border-b border-notion-border">
                     <div class="flex items-center gap-2 sm:gap-3">
                         <h3 class="font-bold text-base sm:text-2xl text-notion-text flex items-center gap-2">
                             <i class="ph-bold ph-calendar-week text-indigo-600"></i> 週間表示 (全教室)
@@ -220,8 +237,8 @@
                     </div>
                 </div>
 
-                <div class="overflow-x-auto no-scrollbar border border-notion-border rounded-xl">
-                    <div id="allRoomsWeeklyGrid" class="min-w-[1100px] bg-white">
+                <div class="weekly-scroll-container border border-notion-border rounded-xl shadow-inner bg-white">
+                    <div id="allRoomsWeeklyGrid" class="min-w-[1350px] bg-white relative">
                         <!-- Populated dynamically -->
                     </div>
                 </div>
@@ -243,12 +260,9 @@
                     <span class="px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 font-bold border border-slate-300">その他</span>
                 </div>
             </div>
-
-            <div id="matrixTableWrapper" class="bg-white rounded-xl border border-notion-border shadow-xs overflow-hidden">
-                <div class="overflow-x-auto no-scrollbar">
-                    <div id="matrixGridContainer" class="w-full min-w-[1100px]">
-                        <!-- Populated dynamically -->
-                    </div>
+            <div id="matrixTableWrapper" class="weekly-scroll-container bg-white rounded-xl border border-notion-border shadow-xs">
+                <div id="matrixGridContainer" class="w-full min-w-[1350px] bg-white relative">
+                    <!-- Populated dynamically -->
                 </div>
             </div>
         </section>
@@ -289,23 +303,19 @@
 
     </main>
 
-    <!-- Mobile Fixed Bottom Navigation Bar -->
+    <!-- Mobile Navigation Bar -->
     <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-notion-border px-2 py-1.5 flex items-center justify-around shadow-[0_-4px_15px_rgba(0,0,0,0.05)]">
         <button onclick="window.switchView('weekly')" id="mob-tab-weekly" class="flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-[10px] font-bold transition w-1/4">
-            <i class="ph-bold ph-calendar-week text-xl"></i>
-            <span>週間表示</span>
+            <i class="ph-bold ph-calendar-week text-xl"></i><span>週間表示</span>
         </button>
         <button onclick="window.switchView('matrix')" id="mob-tab-matrix" class="flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-[10px] font-bold transition w-1/4">
-            <i class="ph-bold ph-grid-four text-xl"></i>
-            <span>当日一覧</span>
+            <i class="ph-bold ph-grid-four text-xl"></i><span>当日一覧</span>
         </button>
         <button onclick="window.switchView('calendar')" id="mob-tab-calendar" class="flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-[10px] font-bold transition w-1/4">
-            <i class="ph-bold ph-calendar-blank text-xl"></i>
-            <span>カレンダー</span>
+            <i class="ph-bold ph-calendar-blank text-xl"></i><span>カレンダー</span>
         </button>
         <button onclick="window.openReservationModal()" class="flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-[10px] font-bold bg-indigo-600 text-white shadow-xs transition w-1/4">
-            <i class="ph-bold ph-plus-circle text-xl"></i>
-            <span>新規予約</span>
+            <i class="ph-bold ph-plus-circle text-xl"></i><span>新規予約</span>
         </button>
     </nav>
 
@@ -325,27 +335,22 @@
                 </button>
             </div>
 
-            <!-- インライン削除確認バー (confirm()の代わりに確実に動くUI) -->
-            <div id="deleteConfirmBar" class="hidden bg-rose-50 border-b border-rose-200 p-3 sm:px-5 flex items-center justify-between gap-3 text-rose-900 shrink-0 animate-fade-in">
+            <!-- インライン削除確認バー -->
+            <div id="deleteConfirmBar" class="hidden bg-rose-50 border-b border-rose-200 p-3 sm:px-5 flex items-center justify-between gap-3 text-rose-900 shrink-0">
                 <div class="flex items-center gap-2 text-xs sm:text-sm font-bold">
                     <i class="ph-fill ph-warning-circle text-rose-600 text-lg"></i>
                     <span>この予約を完全に削除しますか？</span>
                 </div>
                 <div class="flex items-center gap-2 shrink-0">
-                    <button type="button" id="btnCancelDelete" class="px-2.5 py-1 text-xs font-bold rounded-md bg-white border border-rose-300 hover:bg-rose-100 text-rose-700">
-                        やめる
-                    </button>
-                    <button type="button" id="btnConfirmDelete" class="px-3 py-1 text-xs font-bold rounded-md bg-rose-600 hover:bg-rose-700 text-white shadow-xs">
-                        削除する
-                    </button>
+                    <button type="button" id="btnCancelDelete" class="px-2.5 py-1 text-xs font-bold rounded-md bg-white border border-rose-300 hover:bg-rose-100 text-rose-700">やめる</button>
+                    <button type="button" id="btnConfirmDelete" class="px-3 py-1 text-xs font-bold rounded-md bg-rose-600 hover:bg-rose-700 text-white shadow-xs">削除する</button>
                 </div>
             </div>
 
-            <!-- フォーム内部を独立スクロール -->
             <form id="reservationForm" onsubmit="window.saveReservationForm(event)" class="p-4 sm:p-6 space-y-4 overflow-y-auto overscroll-contain flex-1 bg-white pb-28 sm:pb-28" novalidate>
                 <input type="hidden" id="resFormId" />
 
-                <!-- Step 1: 教室・日付・時間帯の確認 -->
+                <!-- Step 1: 教室・日付 -->
                 <div class="space-y-3 bg-notion-sidebar/60 p-3 sm:p-4 rounded-xl border border-notion-border">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
@@ -359,28 +364,68 @@
                         </div>
                     </div>
                     
-                    <!-- コマ範囲選択 -->
-                    <div>
-                        <label class="block text-xs font-bold text-notion-muted mb-1">利用コマ範囲 <span class="text-rose-500">*</span></label>
+                    <!-- 時間指定モードの切り替えタブ -->
+                    <div class="pt-2 border-t border-notion-border/70">
+                        <label class="block text-xs font-bold text-notion-muted mb-1.5">時間帯の指定方法</label>
+                        <div class="grid grid-cols-2 gap-2 p-1 bg-white rounded-lg border border-notion-border">
+                            <button type="button" id="modeBtnSlot" onclick="window.setTimeMode('slot')" class="py-1.5 text-xs font-bold rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-2xs flex items-center justify-center gap-1">
+                                <i class="ph-bold ph-calendar-check"></i> ① コマから選ぶ
+                            </button>
+                            <button type="button" id="modeBtnExact" onclick="window.setTimeMode('exact')" class="py-1.5 text-xs font-bold rounded-md text-notion-muted hover:bg-notion-sidebar flex items-center justify-center gap-1">
+                                <i class="ph-bold ph-clock"></i> ② 時間を直接指定
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- パターン①：コマ範囲選択 (開始時刻のみ / 終了時刻のみ) -->
+                    <div id="containerSlotMode" class="space-y-1.5">
                         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-1.5 sm:gap-2">
                             <div class="flex-1 min-w-0">
+                                <label class="block text-[11px] font-bold text-notion-muted mb-0.5">開始コマ</label>
                                 <select id="resFormStartSlot" required onchange="window.handleModalDateOrPeriodChange()" class="w-full px-2.5 py-2 rounded-lg border border-notion-border text-xs sm:text-sm font-bold bg-white focus:ring-2 focus:ring-indigo-500 truncate">
                                 </select>
                             </div>
-                            <span class="text-xs font-bold text-notion-muted text-center shrink-0">〜</span>
+                            <span class="text-xs font-bold text-notion-muted text-center shrink-0 self-center mt-3">〜</span>
                             <div class="flex-1 min-w-0">
+                                <label class="block text-[11px] font-bold text-notion-muted mb-0.5">終了コマ</label>
                                 <select id="resFormEndSlot" required onchange="window.handleModalDateOrPeriodChange()" class="w-full px-2.5 py-2 rounded-lg border border-notion-border text-xs sm:text-sm font-bold bg-white focus:ring-2 focus:ring-indigo-500 truncate">
                                 </select>
                             </div>
                         </div>
                     </div>
 
-                    <!-- 枠外・詳細時間指定 -->
-                    <div class="pt-1">
-                        <label class="block text-xs font-bold text-notion-text mb-1 flex items-center justify-between">
-                            <span>枠外・詳細な時間指定 <span class="text-[11px] text-notion-muted font-normal">(任意)</span></span>
-                        </label>
-                        <input type="text" id="resFormCustomTime" placeholder="例: 15:00〜17:00 等 (コマ枠に当てはまらない場合に入力)" class="w-full px-3 py-2 rounded-lg border border-notion-border bg-white text-xs sm:text-sm font-bold focus:ring-2 focus:ring-indigo-500" />
+                    <!-- パターン②：時・分プルダウン直接指定 -->
+                    <div id="containerExactMode" class="hidden space-y-2 bg-white p-3 rounded-lg border border-indigo-100">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+                            <!-- 開始時刻 -->
+                            <div>
+                                <label class="block text-[11px] font-bold text-indigo-700 mb-1">開始時刻</label>
+                                <div class="flex items-center gap-1">
+                                    <select id="resFormStartHour" onchange="window.handleExactTimeChange()" class="flex-1 px-2 py-1.5 rounded-md border border-notion-border text-xs font-bold bg-white">
+                                    </select>
+                                    <span class="text-xs font-bold">時</span>
+                                    <select id="resFormStartMin" onchange="window.handleExactTimeChange()" class="flex-1 px-2 py-1.5 rounded-md border border-notion-border text-xs font-bold bg-white">
+                                    </select>
+                                    <span class="text-xs font-bold">分</span>
+                                </div>
+                            </div>
+                            <!-- 終了時刻 -->
+                            <div>
+                                <label class="block text-[11px] font-bold text-indigo-700 mb-1">終了時刻</label>
+                                <div class="flex items-center gap-1">
+                                    <select id="resFormEndHour" onchange="window.handleExactTimeChange()" class="flex-1 px-2 py-1.5 rounded-md border border-notion-border text-xs font-bold bg-white">
+                                    </select>
+                                    <span class="text-xs font-bold">時</span>
+                                    <select id="resFormEndMin" onchange="window.handleExactTimeChange()" class="flex-1 px-2 py-1.5 rounded-md border border-notion-border text-xs font-bold bg-white">
+                                    </select>
+                                    <span class="text-xs font-bold">分</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-[11px] text-notion-muted flex items-center gap-1">
+                            <i class="ph-bold ph-info text-indigo-600"></i>
+                            <span>指定した時間帯にまたがるコマすべてに自動で予約が入ります</span>
+                        </div>
                     </div>
                 </div>
 
@@ -435,9 +480,7 @@
                 <div class="h-14 sm:h-0"></div>
             </form>
             
-            <!-- Modal Bottom Actions -->
             <div class="absolute bottom-0 left-0 right-0 p-3 sm:p-4 bg-white border-t border-notion-border flex items-center justify-between gap-2 rounded-b-2xl sm:rounded-b-3xl">
-                <!-- 削除ボタン（インライン確認バーを開く） -->
                 <button type="button" id="btnDeleteReservation" class="hidden px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold text-rose-600 bg-rose-50 border border-rose-200 hover:bg-rose-100 transition flex items-center gap-1">
                     <i class="ph-bold ph-trash"></i> 削除
                 </button>
@@ -479,16 +522,21 @@
         const database = getDatabase(app);
 
         const DAY_NAMES = ['日', '月', '火', '水', '木', '金', '土'];
+
+        // 🌟 12コマ定義（早朝・朝学活・中休み追加） 🌟
         const TIME_PERIODS = [
-            { id: 'p1',     label: '1校時',             time: '08:50 - 09:40',  short: '1校時' },
-            { id: 'p2',     label: '2校時',             time: '09:50 - 10:40',  short: '2校時' },
-            { id: 'p3',     label: '3校時',             time: '10:55 - 11:45',  short: '3校時' },
-            { id: 'p4',     label: '4校時',             time: '11:55 - 12:45',  short: '4校時' },
-            { id: 'lunch',  label: '昼休み',            time: '12:45 - 13:35',  short: '昼休' },
-            { id: 'p5',     label: '5校時',             time: '13:40 - 14:30',  short: '5校時' },
-            { id: 'p6',     label: '6校時',             time: '14:40 - 15:30',  short: '6校時', label5Period: '放課後(5限後)', time5Period: '14:40 - 15:30' },
-            { id: 'after1', label: '放課後(〜16:30)',   time: '15:30 - 16:30',  short: '〜16:30' },
-            { id: 'after2', label: '16:30以降(フリー)', time: '16:30〜 時間自由', short: '16:30〜', isFreeSlot: true }
+            { id: 'p_early', label: '早朝',           time: '07:30 - 08:15', startOnly: '07:30〜', endOnly: '〜08:15', short: '早朝',   startMin: 7*60+30, endMin: 8*60+15 },
+            { id: 'p_morn',  label: '朝学活',         time: '08:15 - 08:40', startOnly: '08:15〜', endOnly: '〜08:40', short: '朝学活', startMin: 8*60+15, endMin: 8*60+40 },
+            { id: 'p1',      label: '1校時',          time: '08:50 - 09:40', startOnly: '08:50〜', endOnly: '〜09:40', short: '1校時',  startMin: 8*60+50, endMin: 9*60+40 },
+            { id: 'p2',      label: '2校時',          time: '09:50 - 10:40', startOnly: '09:50〜', endOnly: '〜10:40', short: '2校時',  startMin: 9*60+50, endMin: 10*60+40 },
+            { id: 'p_break', label: '休み時間',       time: '10:40 - 10:55', startOnly: '10:40〜', endOnly: '〜10:55', short: '休み',   startMin: 10*60+40, endMin: 10*60+55 },
+            { id: 'p3',      label: '3校時',          time: '10:55 - 11:45', startOnly: '10:55〜', endOnly: '〜11:45', short: '3校時',  startMin: 10*60+55, endMin: 11*60+45 },
+            { id: 'p4',      label: '4校時',          time: '11:55 - 12:45', startOnly: '11:55〜', endOnly: '〜12:45', short: '4校時',  startMin: 11*60+55, endMin: 12*60+45 },
+            { id: 'lunch',   label: '昼休み',         time: '12:45 - 13:35', startOnly: '12:45〜', endOnly: '〜13:35', short: '昼休',   startMin: 12*60+45, endMin: 13*60+35 },
+            { id: 'p5',      label: '5校時',          time: '13:40 - 14:30', startOnly: '13:40〜', endOnly: '〜14:30', short: '5校時',  startMin: 13*60+40, endMin: 14*60+30 },
+            { id: 'p6',      label: '6校時',          time: '14:40 - 15:30', startOnly: '14:40〜', endOnly: '〜15:30', short: '6校時',  label5Period: '放課後(5限後)', time5Period: '14:40 - 15:30', startMin: 14*60+40, endMin: 15*60+30 },
+            { id: 'after1',  label: '放課後(〜16:30)', time: '15:30 - 16:30', startOnly: '15:30〜', endOnly: '〜16:30', short: '〜16:30', startMin: 15*60+30, endMin: 16*60+30 },
+            { id: 'after2',  label: '16:30以降(フリー)', time: '16:30〜 時間自由', startOnly: '16:30〜', endOnly: '〜18:30', short: '16:30〜', startMin: 16*60+30, endMin: 18*60+30, isFreeSlot: true }
         ];
 
         const CATEGORIES = [
@@ -535,23 +583,52 @@
             return map[name] || (name.length > 3 ? name.substring(0, 3) : name);
         }
 
-        const todayISO = formatDateISO(new Date());
-
         const state = {
-            todayISO: todayISO,
-            selectedDate: todayISO,
+            todayISO: formatDateISO(new Date()),
+            selectedDate: formatDateISO(new Date()),
             currentView: 'weekly',
             calendarYear: new Date().getFullYear(),
             calendarMonth: new Date().getMonth(),
             selectedCategory: 'class',
             draggedReservationId: null,
             movingReservationId: null,
+            timeInputMode: 'slot', // 'slot' or 'exact'
             dayScheduleModes: {},
             rooms: JSON.parse(JSON.stringify(DEFAULT_ROOMS)),
             reservations: []
         };
 
-        let hasCheckedForOldData = false; 
+        function cleanupOldReservations() {
+            const currentToday = state.todayISO;
+            const oldIdsToDelete = [];
+            state.reservations.forEach(res => {
+                if (res.date < currentToday) oldIdsToDelete.push(res.id);
+            });
+            oldIdsToDelete.forEach(id => remove(ref(database, 'reservations/' + id)));
+            if (oldIdsToDelete.length > 0) {
+                state.reservations = state.reservations.filter(res => !oldIdsToDelete.includes(res.id));
+            }
+        }
+
+        function checkAndHandleDateChange() {
+            const nowISO = formatDateISO(new Date());
+            if (nowISO !== state.todayISO) {
+                const wasViewingToday = (state.selectedDate === state.todayISO);
+                state.todayISO = nowISO;
+                if (wasViewingToday) state.selectedDate = nowISO;
+                const now = new Date();
+                state.calendarYear = now.getFullYear();
+                state.calendarMonth = now.getMonth();
+                cleanupOldReservations();
+                renderAll();
+                showToast(`日付が更新されました（${now.getMonth()+1}/${now.getDate()}）`, 'info');
+            }
+        }
+        setInterval(checkAndHandleDateChange, 60000);
+        document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkAndHandleDateChange(); });
+        window.addEventListener('focus', checkAndHandleDateChange);
+
+        let hasCheckedForOldData = false;
         let isInitialLoad = true;
 
         onValue(ref(database, 'reservations'), (snapshot) => {
@@ -562,21 +639,10 @@
                 state.reservations = [];
             }
 
-            // 初回ロード時に過去データを自動クリーンアップ
             if (!hasCheckedForOldData && data) {
                 hasCheckedForOldData = true;
-                const oldIdsToDelete = [];
-                state.reservations.forEach(res => {
-                    if (res.date < state.todayISO) oldIdsToDelete.push(res.id);
-                });
-                oldIdsToDelete.forEach(id => {
-                    remove(ref(database, 'reservations/' + id));
-                });
-                if (oldIdsToDelete.length > 0) {
-                    state.reservations = state.reservations.filter(res => !oldIdsToDelete.includes(res.id));
-                }
+                cleanupOldReservations();
             }
-            
             renderAll();
 
             if (isInitialLoad) {
@@ -608,7 +674,7 @@
         function getRoomById(id) { return state.rooms.find(r => r.id === id) || state.rooms[0]; }
         function getPeriodById(id) { return TIME_PERIODS.find(p => p.id === id) || TIME_PERIODS[0]; }
         function getCategoryById(id) { return CATEGORIES.find(c => c.id === id) || CATEGORIES[0]; }
-        
+
         function isReservationInPeriod(res, periodId) {
             const startId = res.startSlot || res.startPeriodId || res.periodId || 'p1';
             const endId = res.endSlot || res.endPeriodId || res.startSlot || res.periodId || 'p1';
@@ -652,6 +718,12 @@
         function renderHeaderControls() {
             document.getElementById('headerDatePicker').value = state.selectedDate;
             document.getElementById('selectedDayOfWeek').textContent = `${DAY_NAMES[parseDateISO(state.selectedDate).getDay()]}曜日`;
+
+            const liveBadge = document.getElementById('liveTodayBadge');
+            if (liveBadge) {
+                liveBadge.classList.toggle('sm:inline-flex', state.selectedDate === state.todayISO);
+                liveBadge.classList.toggle('hidden', state.selectedDate !== state.todayISO);
+            }
 
             const modeBtn = document.getElementById('btnDayScheduleMode');
             const modeLabel = document.getElementById('dayScheduleModeLabel');
@@ -768,18 +840,18 @@
             }
         };
 
-        // 1. Matrix View (当日一覧)
+        // 1. Matrix View (当日一覧 - 12コマ)
         function renderMatrixView() {
             const dateH = document.getElementById('matrixDateHeading');
             if (dateH) dateH.textContent = formatJapaneseDateLabel(state.selectedDate);
 
-            let html = `<div class="schedule-grid border-b border-notion-border bg-notion-sidebar sticky top-0 z-20">
-                <div class="bg-notion-sidebar border-r border-notion-border p-2"></div>`;
+            let html = `<div class="matrix-grid border-b border-notion-border bg-notion-sidebar sticky top-0 z-20 shadow-xs">
+                <div class="bg-notion-sidebar border-r border-notion-border p-2 sticky left-0 z-30"></div>`;
             TIME_PERIODS.forEach(p => {
                 const info = getPeriodDisplayInfo(p, state.selectedDate);
                 html += `<div class="px-1 py-2 sm:px-2 sm:py-3 text-center border-r border-notion-border ${p.isFreeSlot ? 'bg-indigo-50/50' : ''}">
-                    <div class="text-[11px] sm:text-sm font-bold text-notion-text leading-tight">${escapeHTML(info.short)}</div>
-                    <div class="text-[9px] sm:text-xs text-notion-muted hidden sm:block">${escapeHTML(info.time.split(' ')[0])}</div>
+                    <div class="text-[11px] sm:text-xs font-bold text-notion-text leading-tight truncate">${escapeHTML(info.short)}</div>
+                    <div class="text-[9px] text-notion-muted hidden sm:block">${escapeHTML(info.time.split(' ')[0])}</div>
                 </div>`;
             });
             html += `</div>`;
@@ -788,16 +860,16 @@
                 const theme = ROOM_COLOR_MAP[room.color] || ROOM_COLOR_MAP.indigo;
                 const shortRoomName = formatShortRoomName(room.name);
 
-                html += `<div class="schedule-grid border-b border-notion-border hover:bg-notion-bg/50">
-                    <div class="bg-white border-r border-notion-border p-1 sm:p-2 flex flex-col items-center justify-center">
-                        <span class="w-7 h-7 sm:w-9 sm:h-9 rounded-lg ${theme.badgeBg} ${theme.badgeText} flex items-center justify-center mb-1">
-                            <i class="ph-bold ${room.icon} text-base sm:text-lg"></i>
+                html += `<div class="matrix-grid border-b border-notion-border hover:bg-notion-bg/50">
+                    <div class="bg-white border-r border-notion-border p-1 sm:p-2 flex flex-col items-center justify-center cursor-pointer sticky left-0 z-10 shadow-2xs">
+                        <span class="w-7 h-7 sm:w-10 sm:h-10 rounded-lg ${theme.badgeBg} ${theme.badgeText} flex items-center justify-center mb-1">
+                            <i class="ph-bold ${room.icon} text-base sm:text-xl"></i>
                         </span>
-                        <span class="font-bold text-[10px] sm:text-xs text-notion-text tracking-tighter leading-none text-center">${escapeHTML(shortRoomName)}</span>
+                        <span class="font-bold text-[10px] sm:text-sm text-notion-text tracking-tighter leading-none">${escapeHTML(shortRoomName)}</span>
                     </div>`;
                 
                 TIME_PERIODS.forEach(p => {
-                    const res = findReservation(room.id, state.selectedDate, p.id);
+                    const res = state.reservations.find(r => r.roomId === room.id && r.date === state.selectedDate && isReservationInPeriod(r, p.id));
                     html += renderSlotTileHTML(room, state.selectedDate, p, res);
                 });
                 html += `</div>`;
@@ -805,20 +877,21 @@
             document.getElementById('matrixGridContainer').innerHTML = html;
         }
 
-        // 2. Weekly View (週間表示)
+        // 2. Weekly View (週間表示 - 12コマ)
         function renderWeeklyView() {
             const weekDays = Array.from({length: 7}, (_, i) => addDaysISO(state.selectedDate, i));
             const startD = parseDateISO(weekDays[0]);
             const endD = parseDateISO(weekDays[6]);
             document.getElementById('weeklyRangeLabel').textContent = `${startD.getMonth()+1}/${startD.getDate()} 〜 ${endD.getMonth()+1}/${endD.getDate()}`;
             
-            let html = `<div class="schedule-grid border-b border-notion-border bg-notion-sidebar sticky top-0 z-20">
-                <div class="bg-notion-sidebar border-r border-notion-border p-2 text-center text-xs font-bold text-notion-muted flex items-center justify-center">日付</div>`;
+            let html = `<div class="weekly-grid-row border-b border-notion-border bg-notion-sidebar sticky top-0 z-20 shadow-xs font-bold text-notion-muted text-xs select-none">
+                <div class="p-2 border-r border-notion-border text-center flex items-center justify-center bg-notion-sidebar sticky left-0 z-30 shadow-2xs">日付</div>`;
             
             TIME_PERIODS.forEach(p => {
-                html += `<div class="p-2 text-center border-r border-notion-border flex flex-col justify-center items-center ${p.isFreeSlot ? 'bg-indigo-50/50' : ''}">
-                    <div class="text-[11px] sm:text-xs font-bold text-notion-text leading-tight">${p.short}</div>
-                    <div class="text-[9px] text-notion-muted hidden sm:block">${p.time.split(' ')[0]}</div>
+                const info = getPeriodDisplayInfo(p, state.selectedDate);
+                html += `<div class="p-2 text-center border-r border-notion-border flex flex-col justify-center items-center bg-notion-sidebar">
+                    <div class="font-bold text-notion-text text-[11px] sm:text-xs leading-tight truncate">${escapeHTML(info.short)}</div>
+                    <div class="text-[9px] text-slate-400 font-normal mt-0.5">${escapeHTML(info.time.split(' ')[0])}</div>
                 </div>`;
             });
             html += `</div>`;
@@ -828,52 +901,82 @@
                 const isSel = d === state.selectedDate;
                 const isToday = d === state.todayISO;
                 const mode = getDayScheduleMode(d);
+                const dayOfWeek = dt.getDay();
+                const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
 
-                html += `<div class="schedule-grid border-b border-notion-border bg-white min-h-[95px]">
-                    <div onclick="window.handleDateInput('${d}')" class="p-1 sm:p-2 border-r border-notion-border flex flex-col justify-center items-center text-center cursor-pointer transition ${isSel ? 'bg-indigo-600 text-white' : (isToday ? 'bg-indigo-50 text-indigo-700' : 'bg-notion-sidebar hover:bg-notion-hover')}">
-                        <span class="font-bold text-xs sm:text-sm">${dt.getMonth()+1}/${dt.getDate()}</span>
-                        <span class="font-bold text-[10px] sm:text-xs">(${DAY_NAMES[dt.getDay()]})</span>
-                        ${mode === '5period' ? `<span class="mt-1 text-[9px] font-bold px-1 rounded ${isSel ? 'bg-white text-indigo-700' : 'bg-amber-100 text-amber-800'}">5校時</span>` : ''}
+                const dayReservations = state.reservations.filter(r => r.date === d);
+                const hasReservations = dayReservations.length > 0;
+                
+                let rowHeightClass = 'min-h-[105px] bg-white';
+                let isCompactRow = false;
+
+                if (!hasReservations) {
+                    if (isWeekend) {
+                        rowHeightClass = 'min-h-[38px] bg-slate-50/70 opacity-75';
+                        isCompactRow = true;
+                    } else {
+                        rowHeightClass = 'min-h-[56px] bg-white';
+                        isCompactRow = true;
+                    }
+                }
+
+                html += `<div class="weekly-grid-row border-b border-notion-border transition-all ${rowHeightClass}">
+                    <div onclick="window.handleDateInput('${d}')" class="p-1 sm:p-2 border-r border-notion-border flex flex-col justify-center items-center text-center cursor-pointer transition select-none sticky left-0 z-10 shadow-2xs ${isSel ? 'bg-indigo-600 text-white' : (isToday ? 'bg-indigo-50 text-indigo-700' : (isWeekend ? 'bg-slate-100/90 text-slate-500' : 'bg-notion-sidebar hover:bg-notion-hover text-notion-text'))}">
+                        <div class="flex items-center gap-1">
+                            <span class="font-bold text-xs sm:text-sm tracking-tight">${dt.getMonth()+1}/${dt.getDate()}</span>
+                            <span class="font-bold text-[11px] sm:text-xs">(${DAY_NAMES[dayOfWeek]})</span>
+                        </div>
+                        ${isCompactRow && isWeekend ? `<span class="text-[9px] opacity-70">予約なし</span>` : ''}
+                        ${mode === '5period' && !isCompactRow ? `<span class="mt-0.5 text-[9px] font-bold px-1 rounded ${isSel ? 'bg-white text-indigo-700' : 'bg-amber-100 text-amber-800'}">5校時</span>` : ''}
                     </div>`;
                 
                 TIME_PERIODS.forEach(p => {
-                    const info = getPeriodDisplayInfo(p, d);
                     const cellRes = state.reservations.filter(r => r.date === d && isReservationInPeriod(r, p.id));
                     const is5PeriodAfter = (mode === '5period' && p.id === 'p6');
+                    const hasCellRes = cellRes.length > 0;
 
-                    html += `<div class="p-1 border-r border-notion-border flex flex-col gap-1 drop-zone h-full min-h-[95px] ${is5PeriodAfter ? 'bg-amber-50/20' : ''}" ondragover="window.handleDragOver(event)" ondragenter="window.handleDragEnter(event)" ondragleave="window.handleDragLeave(event)" ondrop="window.handleDrop(event, null, '${d}', '${p.id}')">`;
+                    html += `<div class="border-r border-notion-border flex flex-col gap-1 p-1 sm:p-1.5 drop-zone h-full relative justify-center ${is5PeriodAfter ? 'bg-amber-50/20' : ''}" ondragover="window.handleDragOver(event)" ondragenter="window.handleDragEnter(event)" ondragleave="window.handleDragLeave(event)" ondrop="window.handleDrop(event, null, '${d}', '${p.id}')">`;
                     
-                    if (is5PeriodAfter && cellRes.length === 0) {
-                        html += `<div class="m-auto text-[9px] text-amber-700/70 font-bold text-center leading-tight">放課後<br>(5限後)</div>`;
-                    }
+                    if (hasCellRes) {
+                        cellRes.forEach(res => {
+                            const room = getRoomById(res.roomId);
+                            const cat = getCategoryById(res.category);
+                            const isMoving = state.movingReservationId === res.id;
+                            const sSlot = res.startSlot || res.startPeriodId || res.periodId;
+                            const eSlot = res.endSlot || res.endPeriodId || sSlot;
+                            const isMulti = sSlot !== eSlot;
 
-                    cellRes.forEach(res => {
-                        const room = getRoomById(res.roomId);
-                        const cat = getCategoryById(res.category);
-                        const isMoving = state.movingReservationId === res.id;
-                        const sSlot = res.startSlot || res.startPeriodId || res.periodId;
-                        const eSlot = res.endSlot || res.endPeriodId || sSlot;
-                        const isMulti = sSlot !== eSlot;
-
-                        html += `<div draggable="true" ondragstart="window.handleDragStart(event, '${res.id}')" ondragend="window.handleDragEnd(event)" onclick="window.handleSlotInteraction('${res.roomId}', '${d}', '${p.id}', '${res.id}')" class="w-full rounded border ${cat.border} bg-white shadow-2xs p-1 flex flex-col relative overflow-hidden group cursor-grab active:cursor-grabbing reservation-tile min-w-0 ${isMoving ? 'opacity-40 ring-2 ring-indigo-500' : ''}">
-                            <div class="absolute top-0 left-0 bottom-0 w-1 ${cat.dot}"></div>
-                            <div class="pl-1.5 flex flex-col min-w-0">
-                                <div class="flex items-center justify-between mb-0.5 gap-1 min-w-0">
-                                    <span class="text-[9px] font-bold text-indigo-700 bg-indigo-50 px-1 rounded truncate leading-tight">📍${formatShortRoomName(room.name)}</span>
-                                    ${isMulti ? `<span class="text-[8px] font-bold px-1 rounded bg-indigo-100 text-indigo-700">連続</span>` : ''}
+                            html += `<div draggable="true" ondragstart="window.handleDragStart(event, '${res.id}')" ondragend="window.handleDragEnd(event)" onclick="window.handleSlotInteraction('${res.roomId}', '${d}', '${p.id}', '${res.id}')" class="w-full rounded-lg border ${cat.border} bg-white shadow-xs p-1.5 sm:p-2 flex flex-col relative overflow-hidden group cursor-grab active:cursor-grabbing reservation-tile min-w-0 ${isMoving ? 'opacity-40 ring-2 ring-indigo-500' : ''}">
+                                <div class="absolute top-0 left-0 bottom-0 w-1.5 ${cat.dot}"></div>
+                                <div class="pl-2 flex flex-col min-w-0">
+                                    <div class="flex items-center justify-between mb-1 gap-1 min-w-0">
+                                        <span class="text-[9px] sm:text-[10px] font-bold text-indigo-700 bg-indigo-50 px-1 rounded truncate leading-tight">📍 ${escapeHTML(room.name)}</span>
+                                        ${isMulti ? `<span class="text-[8px] font-bold px-1 rounded bg-indigo-100 text-indigo-700 shrink-0">連続</span>` : ''}
+                                    </div>
+                                    <div class="font-bold text-xs sm:text-sm text-notion-text truncate leading-tight">${escapeHTML(res.user)}</div>
+                                    ${res.exactTimeLabel ? `<div class="text-[9px] font-bold text-indigo-600 bg-indigo-50/90 rounded px-1 mt-0.5 truncate w-fit">⏰ ${escapeHTML(res.exactTimeLabel)}</div>` : ''}
                                 </div>
-                                <div class="font-bold text-[10px] text-notion-text truncate leading-tight">${escapeHTML(res.user)}</div>
-                                ${res.customTime ? `<div class="text-[8px] font-bold text-indigo-600 bg-indigo-50/80 rounded px-0.5 mt-0.5 truncate">⏰ ${escapeHTML(res.customTime)}</div>` : ''}
-                            </div>
-                        </div>`;
-                    });
+                            </div>`;
+                        });
 
-                    html += `<button onclick="window.handleSlotInteraction(null, '${d}', '${p.id}', null)" class="w-full mt-auto min-h-[20px] rounded border border-dashed border-emerald-200 bg-emerald-50/30 hover:bg-emerald-50 transition flex items-center justify-center text-emerald-700 opacity-60 hover:opacity-100">
-                        <i class="ph-bold ph-plus text-[10px]"></i>
-                    </button>`;
+                        if (cellRes.length < state.rooms.length && !is5PeriodAfter) {
+                            html += `<button onclick="window.handleSlotInteraction(null, '${d}', '${p.id}', null)" class="w-full mt-auto min-h-[20px] rounded border border-dashed border-emerald-200 bg-emerald-50/20 hover:bg-emerald-100 transition flex items-center justify-center text-emerald-700 opacity-50 hover:opacity-100" title="${p.short}に追加予約">
+                                <i class="ph-bold ph-plus text-xs"></i>
+                            </button>`;
+                        }
+                    } else {
+                        if (is5PeriodAfter) {
+                            html += `<div class="text-[10px] text-amber-700/60 font-bold text-center leading-tight">5限後</div>`;
+                        } else {
+                            html += `<button onclick="window.handleSlotInteraction(null, '${d}', '${p.id}', null)" class="w-full h-full min-h-[28px] flex items-center justify-center text-slate-300 hover:text-emerald-600 hover:bg-emerald-50/50 rounded transition group" title="${p.label} を予約">
+                                <i class="ph-bold ph-plus ${isCompactRow ? 'text-xs' : 'text-sm'} group-hover:scale-125 transition-transform"></i>
+                            </button>`;
+                        }
+                    }
 
                     html += `</div>`;
                 });
+
                 html += `</div>`;
             });
             document.getElementById('allRoomsWeeklyGrid').innerHTML = html;
@@ -907,7 +1010,7 @@
                         ${isMulti ? `<span class="text-[8px] font-bold px-1 rounded bg-indigo-100 text-indigo-700">連続</span>` : ''}
                     </div>
                     <div class="font-bold text-[10px] sm:text-xs text-notion-text truncate leading-tight w-full">${escapeHTML(res.user)}</div>
-                    ${res.customTime ? `<div class="text-[8px] sm:text-[9px] font-bold text-indigo-600 bg-indigo-50 rounded px-1 mt-0.5 truncate">⏰ ${escapeHTML(res.customTime)}</div>` : ''}
+                    ${res.exactTimeLabel ? `<div class="text-[8px] sm:text-[9px] font-bold text-indigo-600 bg-indigo-50 rounded px-1 mt-0.5 truncate">⏰ ${escapeHTML(res.exactTimeLabel)}</div>` : ''}
                     ${res.title ? `<div class="text-[9px] text-notion-muted truncate leading-tight mt-0.5 w-full">${escapeHTML(res.title)}</div>` : ''}
                     <button type="button" onclick="window.startTileMoveMode('${res.id}', event)" class="absolute bottom-1 right-1 p-1 rounded bg-notion-sidebar text-notion-muted hover:text-indigo-600 transition shadow-2xs z-10" title="移動">
                         <i class="ph-bold ph-arrows-out-cardinal text-[10px]"></i>
@@ -982,18 +1085,87 @@
             c.innerHTML = html;
         }
 
-        // 予約モーダル関連
+        // 🌟 モード切替（①コマ選択 / ②時間直接指定） 🌟
+        window.setTimeMode = function(mode) {
+            state.timeInputMode = mode;
+            const btnSlot = document.getElementById('modeBtnSlot');
+            const btnExact = document.getElementById('modeBtnExact');
+            const contSlot = document.getElementById('containerSlotMode');
+            const contExact = document.getElementById('containerExactMode');
+
+            if (mode === 'slot') {
+                btnSlot.className = 'py-1.5 text-xs font-bold rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-2xs flex items-center justify-center gap-1';
+                btnExact.className = 'py-1.5 text-xs font-bold rounded-md text-notion-muted hover:bg-notion-sidebar flex items-center justify-center gap-1';
+                contSlot.classList.remove('hidden');
+                contExact.classList.add('hidden');
+            } else {
+                btnExact.className = 'py-1.5 text-xs font-bold rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-2xs flex items-center justify-center gap-1';
+                btnSlot.className = 'py-1.5 text-xs font-bold rounded-md text-notion-muted hover:bg-notion-sidebar flex items-center justify-center gap-1';
+                contExact.classList.remove('hidden');
+                contSlot.classList.add('hidden');
+            }
+            window.checkFormConflictWarning();
+        };
+
+        // 時・分プルダウンの初期設定
+        function initExactTimeSelects() {
+            const hStart = document.getElementById('resFormStartHour');
+            const hEnd = document.getElementById('resFormEndHour');
+            const mStart = document.getElementById('resFormStartMin');
+            const mEnd = document.getElementById('resFormEndMin');
+
+            let hourOpts = '';
+            for (let h = 7; h <= 20; h++) {
+                const hStr = String(h).padStart(2, '0');
+                hourOpts += `<option value="${h}">${hStr}</option>`;
+            }
+            hStart.innerHTML = hourOpts;
+            hEnd.innerHTML = hourOpts;
+
+            let minOpts = '';
+            for (let m = 0; m < 60; m += 5) {
+                const mStr = String(m).padStart(2, '0');
+                minOpts += `<option value="${m}">${mStr}</option>`;
+            }
+            mStart.innerHTML = minOpts;
+            mEnd.innerHTML = minOpts;
+        }
+
+        // 時刻プルダウン変更時
+        window.handleExactTimeChange = function() {
+            const sH = parseInt(document.getElementById('resFormStartHour').value, 10);
+            const sM = parseInt(document.getElementById('resFormStartMin').value, 10);
+            const eH = parseInt(document.getElementById('resFormEndHour').value, 10);
+            const eM = parseInt(document.getElementById('resFormEndMin').value, 10);
+            const startTotal = sH * 60 + sM;
+            const endTotal = eH * 60 + eM;
+
+            if (endTotal <= startTotal) {
+                // 自動で1時間後に設定
+                const newEndH = Math.min(20, sH + 1);
+                document.getElementById('resFormEndHour').value = newEndH;
+                document.getElementById('resFormEndMin').value = sM;
+            }
+            window.checkFormConflictWarning();
+        };
+
+        // 🌟 プルダウン：開始は「開始時刻のみ」、終了は「終了時刻のみ」を反映 🌟
         function populatePeriodOptions(dateStr, selStartId, selEndId) {
             const startSel = document.getElementById('resFormStartSlot');
             const endSel = document.getElementById('resFormEndSlot');
-            
-            const optionsHTML = TIME_PERIODS.map(p => {
+
+            const startOptionsHTML = TIME_PERIODS.map(p => {
                 const info = getPeriodDisplayInfo(p, dateStr);
-                return `<option value="${p.id}">${escapeHTML(info.label)} (${escapeHTML(info.time)})</option>`;
+                return `<option value="${p.id}">${escapeHTML(info.label)}（${escapeHTML(p.startOnly)}）</option>`;
             }).join('');
 
-            startSel.innerHTML = optionsHTML;
-            endSel.innerHTML = optionsHTML;
+            const endOptionsHTML = TIME_PERIODS.map(p => {
+                const info = getPeriodDisplayInfo(p, dateStr);
+                return `<option value="${p.id}">${escapeHTML(info.label)}（${escapeHTML(p.endOnly)}）</option>`;
+            }).join('');
+
+            startSel.innerHTML = startOptionsHTML;
+            endSel.innerHTML = endOptionsHTML;
 
             if (selStartId) startSel.value = selStartId;
             if (selEndId) endSel.value = selEndId;
@@ -1003,7 +1175,6 @@
             const dateVal = document.getElementById('resFormDate').value;
             const startVal = document.getElementById('resFormStartSlot').value;
             const endVal = document.getElementById('resFormEndSlot').value;
-            
             populatePeriodOptions(dateVal, startVal, endVal);
             window.checkFormConflictWarning();
         };
@@ -1021,7 +1192,6 @@
             const m = document.getElementById('reservationModal');
             document.getElementById('resFormRoom').innerHTML = state.rooms.map(r => `<option value="${r.id}">${escapeHTML(r.name)}</option>`).join('');
             
-            // 削除確認バーを閉じる
             hideDeleteConfirm();
 
             const res = opt.reservationId ? state.reservations.find(r => r.id === opt.reservationId) : null;
@@ -1032,11 +1202,31 @@
             const endSlot = res ? (res.endSlot || res.endPeriodId || res.startSlot || res.periodId) : defaultSlot;
 
             populatePeriodOptions(targetDate, startSlot, endSlot);
+            initExactTimeSelects();
+
+            // 時刻指定モードの初期化
+            if (res && res.exactTime) {
+                window.setTimeMode('exact');
+                document.getElementById('resFormStartHour').value = res.exactTime.startH;
+                document.getElementById('resFormStartMin').value = res.exactTime.startM;
+                document.getElementById('resFormEndHour').value = res.exactTime.endH;
+                document.getElementById('resFormEndMin').value = res.exactTime.endM;
+            } else {
+                window.setTimeMode('slot');
+                const pObj = getPeriodById(startSlot);
+                const sH = Math.floor(pObj.startMin / 60);
+                const sM = pObj.startMin % 60;
+                const eH = Math.floor(pObj.endMin / 60);
+                const eM = pObj.endMin % 60;
+                document.getElementById('resFormStartHour').value = sH;
+                document.getElementById('resFormStartMin').value = sM - (sM % 5);
+                document.getElementById('resFormEndHour').value = eH;
+                document.getElementById('resFormEndMin').value = eM - (eM % 5);
+            }
             
             document.getElementById('resFormId').value = res ? res.id : '';
             document.getElementById('resFormRoom').value = res ? res.roomId : (opt.roomId || state.rooms[0].id);
             document.getElementById('resFormDate').value = targetDate;
-            document.getElementById('resFormCustomTime').value = res ? (res.customTime || '') : '';
             state.selectedCategory = res ? res.category : 'class';
             document.getElementById('resFormUser').value = res ? res.user : '';
             document.getElementById('resFormTitle').value = res ? (res.title || '') : '';
@@ -1078,16 +1268,54 @@
             document.getElementById('resFormUser').classList.remove('border-rose-500'); 
             document.getElementById('resFormUserError').classList.add('hidden'); 
         };
+
+        // 予約のコマ範囲を判定するヘルパー
+        function getComputedSlotRange() {
+            if (state.timeInputMode === 'exact') {
+                const sH = parseInt(document.getElementById('resFormStartHour').value, 10);
+                const sM = parseInt(document.getElementById('resFormStartMin').value, 10);
+                const eH = parseInt(document.getElementById('resFormEndHour').value, 10);
+                const eM = parseInt(document.getElementById('resFormEndMin').value, 10);
+                const reqStart = sH * 60 + sM;
+                const reqEnd = eH * 60 + eM;
+
+                const covered = TIME_PERIODS.filter(p => !(reqEnd <= p.startMin || reqStart >= p.endMin));
+                if (covered.length === 0) return { startSlot: 'p1', endSlot: 'p1', sIdx: 2, eIdx: 2, exactTimeLabel: `${String(sH).padStart(2,'0')}:${String(sM).padStart(2,'0')}〜${String(eH).padStart(2,'0')}:${String(eM).padStart(2,'0')}` };
+                
+                const startSlot = covered[0].id;
+                const endSlot = covered[covered.length - 1].id;
+                const sIdx = TIME_PERIODS.findIndex(p => p.id === startSlot);
+                const eIdx = TIME_PERIODS.findIndex(p => p.id === endSlot);
+                return {
+                    startSlot,
+                    endSlot,
+                    sIdx,
+                    eIdx,
+                    exactTime: { startH: sH, startM: sM, endH: eH, endM: eM },
+                    exactTimeLabel: `${String(sH).padStart(2,'0')}:${String(sM).padStart(2,'0')}〜${String(eH).padStart(2,'0')}:${String(eM).padStart(2,'0')}`
+                };
+            } else {
+                const startSlot = document.getElementById('resFormStartSlot').value;
+                const endSlot = document.getElementById('resFormEndSlot').value;
+                const sIdx = TIME_PERIODS.findIndex(p => p.id === startSlot);
+                const eIdx = TIME_PERIODS.findIndex(p => p.id === endSlot);
+                return {
+                    startSlot,
+                    endSlot,
+                    sIdx,
+                    eIdx,
+                    exactTime: null,
+                    exactTimeLabel: null
+                };
+            }
+        }
         
         window.checkFormConflictWarning = function() {
             const r = document.getElementById('resFormRoom').value;
             const d = document.getElementById('resFormDate').value;
-            const startSlot = document.getElementById('resFormStartSlot').value;
-            const endSlot = document.getElementById('resFormEndSlot').value;
-            const sIdx = TIME_PERIODS.findIndex(p => p.id === startSlot);
-            const eIdx = TIME_PERIODS.findIndex(p => p.id === endSlot);
-            const minIdx = Math.min(sIdx, eIdx);
-            const maxIdx = Math.max(sIdx, eIdx);
+            const range = getComputedSlotRange();
+            const minIdx = Math.min(range.sIdx, range.eIdx);
+            const maxIdx = Math.max(range.sIdx, range.eIdx);
             const id = document.getElementById('resFormId').value;
 
             let conflictRes = null;
@@ -1121,18 +1349,14 @@
             
             const rId = document.getElementById('resFormRoom').value;
             const dStr = document.getElementById('resFormDate').value;
-            const startSlot = document.getElementById('resFormStartSlot').value;
-            const endSlot = document.getElementById('resFormEndSlot').value;
-            const customTime = document.getElementById('resFormCustomTime').value.trim();
+            const range = getComputedSlotRange();
 
-            const sIdx = TIME_PERIODS.findIndex(p => p.id === startSlot);
-            const eIdx = TIME_PERIODS.findIndex(p => p.id === endSlot);
-            if (eIdx < sIdx) {
+            if (range.eIdx < range.sIdx) {
                 showToast('終了コマは、開始コマ以降を選択してください', 'error');
                 return;
             }
             
-            for (let i = sIdx; i <= eIdx; i++) {
+            for (let i = range.sIdx; i <= range.eIdx; i++) {
                 const exist = findReservation(rId, dStr, TIME_PERIODS[i].id);
                 if (exist && exist.id !== id) {
                     showToast(`選択した範囲（${TIME_PERIODS[i].short}）に既に予約（${exist.user}）があります`, 'error');
@@ -1143,10 +1367,11 @@
             const resData = {
                 roomId: rId,
                 date: dStr,
-                startSlot: startSlot,
-                endSlot: endSlot,
-                periodId: startSlot,
-                customTime: customTime,
+                startSlot: range.startSlot,
+                endSlot: range.endSlot,
+                periodId: range.startSlot,
+                exactTime: range.exactTime || null,
+                exactTimeLabel: range.exactTimeLabel || null,
                 user: user,
                 category: state.selectedCategory,
                 title: document.getElementById('resFormTitle').value,
@@ -1162,7 +1387,6 @@
             showToast('予約を保存しました');
         };
 
-        // 確実なインライン削除確認＆削除実行処理
         function showDeleteConfirm() {
             document.getElementById('deleteConfirmBar').classList.remove('hidden');
         }
@@ -1170,20 +1394,12 @@
             document.getElementById('deleteConfirmBar').classList.add('hidden');
         }
 
-        // 初期化時に確実にイベントリスナーを登録
         const btnDelete = document.getElementById('btnDeleteReservation');
         const btnCancelDelete = document.getElementById('btnCancelDelete');
         const btnConfirmDelete = document.getElementById('btnConfirmDelete');
 
-        btnDelete.addEventListener('click', (e) => {
-            e.preventDefault();
-            showDeleteConfirm();
-        });
-
-        btnCancelDelete.addEventListener('click', (e) => {
-            e.preventDefault();
-            hideDeleteConfirm();
-        });
+        btnDelete.addEventListener('click', (e) => { e.preventDefault(); showDeleteConfirm(); });
+        btnCancelDelete.addEventListener('click', (e) => { e.preventDefault(); hideDeleteConfirm(); });
 
         btnConfirmDelete.addEventListener('click', async (e) => {
             e.preventDefault();
